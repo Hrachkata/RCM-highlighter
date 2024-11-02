@@ -1,0 +1,25 @@
+{
+  "name": "xmljs-rcm-highlight",
+  "displayName": "XMLJS RCM highlight",
+  "description": "An extension that enables highlighting specifically for RCM development.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "grammars": [
+      {
+        "path": "./syntaxes/rcm.tmLanguage.json",
+        "scopeName": "source.js.injection",
+        "injectTo": [ "text.xml" ],
+        "embeddedLanguages": {
+            "meta.embedded.block.js": "javascript",
+            "meta.embedded.attribute.js": "javascript"
+        }
+      }
+    ]
+  }
+}

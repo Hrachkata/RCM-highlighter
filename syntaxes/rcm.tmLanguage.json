@@ -1,0 +1,36 @@
+{
+	"scopeName": "source.js.injection",
+	"fileTypes": ["xml", "rcm"],
+	"injectionSelector": "L:text.xml",
+	"patterns": [
+		{
+			"include": "#js-code-block"
+		}
+	],
+	"repository": {
+		"js-code-block": {
+			"patterns": [
+				{
+					"contentName": "meta.embedded.block.js",
+					"begin": "<\\!\\[CDATA\\[",
+					"end": "]]>",
+					"patterns": [
+						{
+							"include": "source.js"
+						}
+					] 
+				},
+				{
+					"contentName": "meta.embedded.attribute.js",
+					"begin": "\".*?{{=",
+					"end": "}}.*?\"",
+					"patterns": [
+						{
+							"include": "source.js"
+						}
+					] 
+				}
+			]
+		}
+	}
+}
