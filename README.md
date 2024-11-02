@@ -1,8 +1,8 @@
 ## Features
 
-Enables JS highlighting inside XML. For the extension to work your JS has to be inside <![CDATA[ and closed with ]]> 
+Enables JS highlighting inside XML. For the extension to work your JS has to be inside \<\!\[CDATA\[ and closed with \]\]\> 
 
-\!\[example\]\(images/example.png\)
+![example.png](images/example.png)
 
 ## Extension Settings
 
