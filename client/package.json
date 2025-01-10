@@ -1,0 +1,13 @@
+{
+  "name": "xmljs-rcm-highlight",
+  "displayName": "XML-JS RCM highlighter",
+  "description": "An extension that enables highlighting specifically for RCM development.",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+	"dependencies": {
+		"vscode": "^1.1.37",
+		"vscode-languageclient": "^9.0.1"
+	}
+}
