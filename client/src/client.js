@@ -4,7 +4,7 @@ const path = require('path');
 const { LanguageClient, LanguageClientOptions, ServerOptions } = require('vscode-languageclient/node');
 
 // Defines the search path of your language server DLL. (.NET Core)
-const languageServerPath = "server/bin/Debug/net8.0/RcmServer.dll";
+const languageServerPath = "server/bin/Debug/net5.0/RcmServer.dll";
 const languageServerDll = "RcmServer.dll";
 
 function activate(context) {
