@@ -23,20 +23,13 @@ namespace RcmServer
 
         private static async Task MainAsync(string[] args)
         {
-            // Debugger.Launch();
-            // while (!Debugger.IsAttached)
-            // {
-            //     await Task.Delay(100);
-            // }
-
-
             Log.Logger = new LoggerConfiguration()
                         .Enrich.FromLogContext()
                         .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day)
                         .MinimumLevel.Verbose()
                         .CreateLogger();
 
-            Log.Logger.Information("This only goes file...");
+            Log.Logger.Information("The server starts at least.");
 
             IObserver<WorkDoneProgressReport> workDone = null!;
 
@@ -50,7 +43,7 @@ namespace RcmServer
                                 .AddLanguageProtocolLogging()
                             .SetMinimumLevel(LogLevel.Debug)
                 )
-                        //.WithHandler<TextDocumentHandler>()
+                        .WithHandler<TextDocumentHandler>()
                         //.WithHandler<DidChangeWatchedFilesHandler>()
                         //.WithHandler<FoldingRangeHandler>()
                         //.WithHandler<MyWorkspaceSymbolsHandler>()
