@@ -33,7 +33,7 @@ namespace RcmServer
 
             IObserver<WorkDoneProgressReport> workDone = null!;
 
-            var server = await LanguageServer.From(
+            LanguageServer? server = await LanguageServer.From(
                 options =>
                     options
                        .WithInput(Console.OpenStandardInput())
@@ -43,7 +43,8 @@ namespace RcmServer
                                 .AddLanguageProtocolLogging()
                             .SetMinimumLevel(LogLevel.Debug)
                 )
-                        .WithHandler<TextDocumentHandler>()
+                        .WithHandler<CompletionHandler>()
+                        //.WithHandler<TextDocumentHandler>()
                         //.WithHandler<DidChangeWatchedFilesHandler>()
                         //.WithHandler<FoldingRangeHandler>()
                         //.WithHandler<MyWorkspaceSymbolsHandler>()
@@ -164,6 +165,10 @@ namespace RcmServer
                             }
                         )
             ).ConfigureAwait(false);
+
+            var test = new ChangeHandler(server);
+
+            server.HandlersManager.Add(test);
 
             await server.WaitForExit.ConfigureAwait(false);
         }

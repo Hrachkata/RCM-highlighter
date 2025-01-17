@@ -55,6 +55,8 @@ namespace RcmServer
             await Task.Yield();
             _logger.LogInformation("Hello world!");
             await _configuration.GetScopedConfiguration(notification.TextDocument.Uri, token).ConfigureAwait(false);
+
+
             return Unit.Value;
         }
 

@@ -4,15 +4,17 @@ const path = require('path');
 const { LanguageClient, LanguageClientOptions, ServerOptions } = require('vscode-languageclient/node');
 
 // Defines the search path of your language server DLL. (.NET Core)
-const languageServerPath = "server/bin/Debug/net5.0/RcmServer.dll";
+const languageServerPathDebug = "server/bin/Debug/net5.0/RcmServer.dll";
+const languageServerPathRelease = "server/bin/Release/net5.0/RcmServer.dll";
 const languageServerDll = "RcmServer.dll";
 
 function activate(context) {
-    let workPath = path.dirname(context.asAbsolutePath(languageServerPath));
+    let workPathDebug = path.dirname(context.asAbsolutePath(languageServerPathDebug));
+    let workPathRelease = path.dirname(context.asAbsolutePath(languageServerPathRelease));
 
     let serverOptions = {
-        run: { command: "dotnet", args: [languageServerDll], options: { cwd: workPath } },
-        debug: { command: "dotnet", args: [languageServerDll, "--debug"], options: { cwd: workPath } }
+        run: { command: "dotnet", args: [languageServerDll], options: { cwd: workPathRelease } },
+        debug: { command: "dotnet", args: [languageServerDll, "--debug"], options: { cwd: workPathDebug } }
     };
     
 
