@@ -15,18 +15,29 @@ namespace RcmServer
 
         private readonly ILanguageServerFacade _languageServer;
 
+
+        private readonly TextDocumentSelector _textDocumentSelector = new TextDocumentSelector(
+            new TextDocumentFilter
+            {
+                Pattern = "**/*.rcm"
+            }
+        );
         public ChangeHandler(ILanguageServerFacade languageServer)
         {
             _languageServer = languageServer;
         }
         public TextDocumentChangeRegistrationOptions GetRegistrationOptions(TextSynchronizationCapability capability, ClientCapabilities clientCapabilities)
         {
-            throw new System.NotImplementedException();
+            var test = new TextDocumentChangeRegistrationOptions();
+            
+            return test;
         }
 
         public TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri)
         {
-            throw new System.NotImplementedException();
+            var test = new TextDocumentAttributes(uri, "xml");
+
+            return test;
         }
 
         public Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
@@ -55,12 +66,12 @@ namespace RcmServer
 
         public Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
         {
-            throw new System.NotImplementedException();
+            return Unit.Task;
         }
 
         public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken)
         {
-            throw new System.NotImplementedException();
+            return Unit.Task;
         }
 
         public Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken)

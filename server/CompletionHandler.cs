@@ -15,7 +15,7 @@ namespace RcmServer
             {
             new CompletionItem
             {
-                Label = "ExampleTag",
+                Label = "Resource",
                 Kind = CompletionItemKind.Text,
                 Detail = "An example XML tag",
                 InsertText = "<ExampleTag></ExampleTag>",
@@ -23,11 +23,19 @@ namespace RcmServer
             },
             new CompletionItem
             {
-                Label = "AnotherTag",
+                Label = "Name",
                 Kind = CompletionItemKind.Snippet,
-                Detail = "Another XML tag",
-                InsertText = "<AnotherTag>${1}</AnotherTag>",
-                Documentation = "This is another example tag."
+                Detail = "Name attribute.",
+                InsertText = "Name=\"\"",
+                Documentation = "Name attribute."
+            },
+            new CompletionItem
+            {
+                Label = "Duck",
+                Kind = CompletionItemKind.Snippet,
+                Detail = "🦆.",
+                InsertText = "🦆🦆🦆🦆🦆",
+                Documentation = "🦆."
             }
         };
 

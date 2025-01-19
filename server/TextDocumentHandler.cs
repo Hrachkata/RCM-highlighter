@@ -22,8 +22,9 @@ namespace RcmServer
 {
     public class TextDocumentHandler : TextDocumentSyncHandlerBase
     {
-        private readonly ILogger<TextDocumentHandler> _logger;
+        private readonly Serilog.ILogger _logger;
         private readonly ILanguageServerConfiguration _configuration;
+        private readonly ILanguageServerFacade _languageServer;
 
         private readonly TextDocumentSelector _textDocumentSelector = new TextDocumentSelector(
             new TextDocumentFilter
@@ -32,8 +33,9 @@ namespace RcmServer
             }
         );
 
-        internal TextDocumentHandler(ILogger<TextDocumentHandler> logger, Foo foo, ILanguageServerConfiguration configuration)
+        public TextDocumentHandler(ILanguageServerFacade languageServer, Serilog.ILogger logger, Foo foo, ILanguageServerConfiguration configuration)
         {
+            _languageServer = languageServer;
             _logger = logger;
             _configuration = configuration;
             foo.SayFoo();
@@ -43,17 +45,17 @@ namespace RcmServer
 
         public override Task<Unit> Handle(DidChangeTextDocumentParams notification, CancellationToken token)
         {
-            _logger.LogCritical("Critical");
-            _logger.LogDebug("Debug");
-            _logger.LogTrace("Trace");
-            _logger.LogInformation("Hello world!");
+            _logger.Error("Critical");
+            _logger.Debug("Debug");
+            _logger.Information("Trace");
+            _logger.Information("Hello world!");
             return Unit.Task;
         }
 
         public override async Task<Unit> Handle(DidOpenTextDocumentParams notification, CancellationToken token)
         {
             await Task.Yield();
-            _logger.LogInformation("Hello world!");
+            _logger.Information("Hello world!");
             await _configuration.GetScopedConfiguration(notification.TextDocument.Uri, token).ConfigureAwait(false);
 
 
