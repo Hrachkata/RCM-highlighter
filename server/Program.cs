@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using System.Xml.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -60,6 +61,14 @@ namespace RcmServer
                                     }
                                 );
                                 services.AddSingleton(
+                                    schemaManger =>
+                                    {
+                                        var schemaManager = new SchemaManager();
+                                        schemaManager.GetSchemaAsync("https://www.cozyroc.com/sites/default/files/down/schema/rcm-config-1.0.xsd").Wait();
+                                        return schemaManager;
+                                    }
+                                );
+                                services.AddSingleton(
                                     new ConfigurationItem
                                     {
                                         Section = "xml",
@@ -70,6 +79,12 @@ namespace RcmServer
                                         Section = "terminal",
                                     }
                                 );
+                            }
+                        )
+                       .OnInitialize(
+                            async (server, request, token) =>
+                            {
+                                await Task.Delay(2000).ConfigureAwait(false);
                             }
                         )
                        .OnStarted(
@@ -109,8 +124,9 @@ namespace RcmServer
                         )
             ).ConfigureAwait(false);
 
-            var foo = new Foo(Log.Logger);
-            var test = new TextDocumentHandler(server, Log.Logger, foo, server.Configuration);;
+            var test = new TextDocumentHandler(server, Log.Logger, server.Configuration, server.GetService<SchemaManager>());
+
+            server.GetRequiredService<SchemaManager>();
 
             server.Register(registry => { registry.AddHandler(test); });
 

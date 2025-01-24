@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Schema;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using OmniSharp.Extensions.LanguageServer.Protocol;
@@ -25,6 +28,7 @@ namespace RcmServer
         private readonly Serilog.ILogger _logger;
         private readonly ILanguageServerConfiguration _configuration;
         private readonly ILanguageServerFacade _languageServer;
+        private readonly SchemaManager _schemaManager;
 
         private readonly TextDocumentSelector _textDocumentSelector = new TextDocumentSelector(
             new TextDocumentFilter
@@ -33,23 +37,66 @@ namespace RcmServer
             }
         );
 
-        public TextDocumentHandler(ILanguageServerFacade languageServer, Serilog.ILogger logger, Foo foo, ILanguageServerConfiguration configuration)
+        public TextDocumentHandler(ILanguageServerFacade languageServer, Serilog.ILogger logger, ILanguageServerConfiguration configuration, SchemaManager schemaManager)
         {
             _languageServer = languageServer;
             _logger = logger;
             _configuration = configuration;
-            foo.SayFoo();
+            _schemaManager = schemaManager;
         }
 
         public TextDocumentSyncKind Change { get; } = TextDocumentSyncKind.Full;
 
-        public override Task<Unit> Handle(DidChangeTextDocumentParams notification, CancellationToken token)
+        public override async Task<Unit> Handle(DidChangeTextDocumentParams notification, CancellationToken token)
         {
-            _logger.Error("Critical");
-            _logger.Debug("Debug");
-            _logger.Information("Trace");
-            _logger.Information("Hello world!");
-            return Unit.Task;
+            _logger.Information("Changed text document.");
+
+            //var schema = await _schemaManager.GetSchemaAsync("https://www.cozyroc.com/sites/default/files/down/schema/rcm-config-1.0.xsd");
+
+            XmlTextReader reader1 = new XmlTextReader(@"C:\Users\Tigan\Downloads\rcm.xsd");
+            XmlSchema schema = XmlSchema.Read(reader1, ValidationCallBack);
+
+            // Set the validation settings.
+            XmlReaderSettings settings = new XmlReaderSettings();
+            settings.ValidationType = ValidationType.Schema;
+            settings.Schemas.Add(schema);
+            settings.ValidationEventHandler += new ValidationEventHandler(ValidationCallBack);
+
+            TextDocumentContentChangeEvent test = null;
+
+            foreach (TextDocumentContentChangeEvent? item in notification.ContentChanges)
+            {
+                test = item;
+            }
+
+            XmlReader reader;
+            // Create the XmlReader object.
+            try
+            {
+                using (StringReader stringReader = new StringReader(test.Text))
+                using (XmlReader validator = XmlReader.Create(stringReader, settings))
+                {
+                    // Validate the entire xml file
+                    while (validator.Read()) ;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                throw e;
+            }
+
+            return Unit.Value;
+        }
+
+        // Display any warnings or errors.
+        private static void ValidationCallBack(object sender, ValidationEventArgs args)
+        {
+            if (args.Severity == XmlSeverityType.Warning)
+                Console.WriteLine("\tWarning: Matching schema not found.  No validation occurred." + args.Message);
+            else
+                Console.WriteLine("\tValidation error: " + args.Message);
+
         }
 
         public override async Task<Unit> Handle(DidOpenTextDocumentParams notification, CancellationToken token)
@@ -82,6 +129,35 @@ namespace RcmServer
         };
 
         public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) => new TextDocumentAttributes(uri, "csharp");
+
+        public static bool ValidateXml(string xmlString, XmlSchema schema)
+        {
+            try
+            {
+                // Load the schema into a schema set
+                var schemaSet = new XmlSchemaSet();
+                schemaSet.Add(schema);
+
+                // Configure validation settings
+                var settings = new XmlReaderSettings
+                {
+                    ValidationType = ValidationType.Schema,
+                    Schemas = schemaSet
+                };
+
+                // Validate XML
+                using (var xmlReader = XmlReader.Create(new StringReader(xmlString), settings))
+                {
+                    while (xmlReader.Read()) { } // Process the entire XML document
+                }
+
+                return true; // Valid XML
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"XML validation failed: {ex.Message}", ex);
+            }
+        }
     }
 
     internal class MyDocumentSymbolHandler : IDocumentSymbolHandler
