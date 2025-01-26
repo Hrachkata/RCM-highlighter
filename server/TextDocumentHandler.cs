@@ -27,8 +27,12 @@ namespace RcmServer
     {
         private readonly Serilog.ILogger _logger;
         private readonly ILanguageServerConfiguration _configuration;
-        private readonly ILanguageServerFacade _languageServer;
-        private readonly SchemaManager _schemaManager;
+        private readonly ILanguageServer _languageServer;
+        // private readonly SchemaManager _schemaManager;
+        private List<Diagnostic> _diagnostics;
+        private XmlTextReader schemaTextReader = new XmlTextReader(@"C:\Users\Tigan\Downloads\rcm.xsd");
+        private XmlSchema schema;
+        private XmlReaderSettings _settings;
 
         private readonly TextDocumentSelector _textDocumentSelector = new TextDocumentSelector(
             new TextDocumentFilter
@@ -37,12 +41,36 @@ namespace RcmServer
             }
         );
 
-        public TextDocumentHandler(ILanguageServerFacade languageServer, Serilog.ILogger logger, ILanguageServerConfiguration configuration, SchemaManager schemaManager)
+        private List<Diagnostic> diagnostics { get => _diagnostics; set => _diagnostics = value; }
+
+        public XmlReaderSettings settings
+        {
+            get
+            {
+                if (_settings == null)
+                {
+                    _settings = new XmlReaderSettings();
+                    _settings.ValidationType = ValidationType.Schema;
+                    _settings.Schemas.Add(schema);
+                    _settings.ValidationEventHandler += new ValidationEventHandler(ValidationCallBack);
+                    _settings.IgnoreComments = true;
+                }
+
+                return _settings;
+            } 
+            set => _settings = value; 
+        }
+
+        public TextDocumentHandler(ILanguageServer languageServer, Serilog.ILogger logger, ILanguageServerConfiguration configuration, SchemaManager schemaManager)
         {
             _languageServer = languageServer;
             _logger = logger;
             _configuration = configuration;
-            _schemaManager = schemaManager;
+            diagnostics = new List<Diagnostic>();
+            schema = XmlSchema.Read(schemaTextReader, ValidationCallBack);
+            // Invalid for now
+            //_schemaManager = schemaManager;
+            //var schema = await _schemaManager.GetSchemaAsync("https://www.cozyroc.com/sites/default/files/down/schema/rcm-config-1.0.xsd");
         }
 
         public TextDocumentSyncKind Change { get; } = TextDocumentSyncKind.Full;
@@ -51,52 +79,75 @@ namespace RcmServer
         {
             _logger.Information("Changed text document.");
 
-            //var schema = await _schemaManager.GetSchemaAsync("https://www.cozyroc.com/sites/default/files/down/schema/rcm-config-1.0.xsd");
-
-            XmlTextReader reader1 = new XmlTextReader(@"C:\Users\Tigan\Downloads\rcm.xsd");
-            XmlSchema schema = XmlSchema.Read(reader1, ValidationCallBack);
-
-            // Set the validation settings.
-            XmlReaderSettings settings = new XmlReaderSettings();
-            settings.ValidationType = ValidationType.Schema;
-            settings.Schemas.Add(schema);
-            settings.ValidationEventHandler += new ValidationEventHandler(ValidationCallBack);
-
-            TextDocumentContentChangeEvent test = null;
+            TextDocumentContentChangeEvent changedEvent = null;
 
             foreach (TextDocumentContentChangeEvent? item in notification.ContentChanges)
             {
-                test = item;
+                changedEvent = item;
             }
 
             XmlReader reader;
             // Create the XmlReader object.
             try
             {
-                using (StringReader stringReader = new StringReader(test.Text))
+                using (StringReader stringReader = new StringReader(changedEvent.Text))
                 using (XmlReader validator = XmlReader.Create(stringReader, settings))
                 {
                     // Validate the entire xml file
-                    while (validator.Read()) ;
+                    while ( validator.Read() );
                 }
             }
-            catch (Exception e)
+            catch (XmlException e)
             {
-                Console.WriteLine(e.Message);
-                throw e;
+                var range = new Range(
+                    new Position(e.LineNumber - 1, e.LinePosition - 1),
+                    new Position(e.LineNumber - 1, e.LinePosition + 999));
+
+                var currentDiagItem = new Diagnostic()
+                {
+                    Severity = DiagnosticSeverity.Error,
+                    Code = "banana",
+                    Message = e.Message,
+                    Source = "RCM-NET-server",
+                    Range = range
+                };
+
+                diagnostics.Add(currentDiagItem);
             }
+
+            var publishDiagnosticsParams = new PublishDiagnosticsParams
+            {
+                Uri = notification.TextDocument.Uri,
+                Diagnostics = diagnostics
+            };
+
+            _languageServer.TextDocument.PublishDiagnostics(publishDiagnosticsParams);
+
+            diagnostics.Clear();
 
             return Unit.Value;
         }
 
         // Display any warnings or errors.
-        private static void ValidationCallBack(object sender, ValidationEventArgs args)
+        private void ValidationCallBack(object? sender, ValidationEventArgs args)
         {
-            if (args.Severity == XmlSeverityType.Warning)
-                Console.WriteLine("\tWarning: Matching schema not found.  No validation occurred." + args.Message);
-            else
-                Console.WriteLine("\tValidation error: " + args.Message);
+            var changedText = sender?.GetType().GetProperty("Name")?.GetValue(sender, null).ToString();
 
+            var range = new Range(
+                    new Position(args.Exception.LineNumber - 1, args.Exception.LinePosition - 1),
+                    new Position(args.Exception.LineNumber - 1, args.Exception.LinePosition + changedText.Length));
+
+
+            var currentDiagItem = new Diagnostic()
+            {
+                Severity = args.Severity == XmlSeverityType.Error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
+                Code = "banana",
+                Message = args.Message,
+                Source = "RCM-NET-server",
+                Range = range
+            };
+
+            diagnostics.Add(currentDiagItem);
         }
 
         public override async Task<Unit> Handle(DidOpenTextDocumentParams notification, CancellationToken token)
