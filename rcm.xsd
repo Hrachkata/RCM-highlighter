@@ -1,0 +1,856 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	Copyright © 2006-2019 COZYROC LLC. All rights reserved.
+
+	xsd -c -l:c# -n:CozyRoc.Rest.Configuration xmldsig-core-schema.xsd .\rcm-config-1.0.xsd
+-->
+<xs:schema
+	targetNamespace="http://www.cozyroc.com/schema/rcm-config-1.0.xsd"
+	xmlns:config="http://www.cozyroc.com/schema/rcm-config-1.0.xsd"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	elementFormDefault="qualified"
+	xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">
+
+	<xs:import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="xmldsig-core-schema.xsd" />
+
+	<xs:element name="Documentation">
+		<xs:simpleType>
+			<xs:restriction base="xs:string">
+				<xs:annotation>
+					<xs:documentation>Specifies additional element documentation and reference material.</xs:documentation>
+				</xs:annotation>
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:element>
+
+	<xs:element name="ConnectionManager">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="config:Service" />
+				<xs:element ref="config:Authentication" minOccurs="0" maxOccurs="unbounded" />
+				<xs:element ref="config:Resources" minOccurs="0" />
+				<xs:element ref="config:FileManager" minOccurs="0" />
+				<xs:element ref="config:Script" minOccurs="0" />
+			</xs:sequence>
+			<xs:attribute name="Name" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>Specifies connection manager name.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="RuntimeVersion" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>Specifies the required COZYROC SSIS+ runtime version.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>			
+			<xs:attribute name="Help" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>Specifies URL of help topic.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="Service">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="config:ErrorHandling" minOccurs="0" />
+			</xs:sequence>
+			<xs:attribute name="EndPoint" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>Specifies the base address of the service endpoints.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="ErrorHandling">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="config:Documentation" minOccurs="0" />
+			</xs:sequence>
+			<xs:attribute name="Status" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>Specifies error status extraction expression. Available template variables: item (only in Action context), response.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="List" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>Specifies error list extraction expression. Available template variables: item (only in Action context), response.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="Code" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>Specifies error code extraction expression. Available template variables: item, response.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="ErrorMessage" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>Specifies error message extraction expression. Available template variables: item, response.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="SuccessMessage" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>Specifies success message extraction expression. Available template variables: item, response.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="Authentication">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="config:Documentation" minOccurs="0" />
+				<xs:element name="User" type="config:UserParameters" minOccurs="0" />
+				<xs:element name="Test" type="config:TestRequest" minOccurs="0" />
+				<xs:element name="Token" type="config:TokenAuthentication" minOccurs="0" />
+				<xs:element name="Parameters" type="config:RestParameters" minOccurs="0" />
+			</xs:sequence>
+			<xs:attribute name="Name" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>Specifies authentication name/identifier. Required if the service supports multiple authentication methods.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="Cached" type="xs:boolean" default="true">
+				<xs:annotation>
+					<xs:documentation>Specifies whether the authentication is cached (i.e. whether or not subsequent HTTP requests can reuse authentication parameters).</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:complexType name="RestRequest">
+		<xs:sequence>
+			<xs:element ref="config:Documentation" minOccurs="0" />
+			<xs:element name="Parameters" type="config:RestParameters" minOccurs="0" />
+		</xs:sequence>
+		<xs:attribute name="Url" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies request URL.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Method" type="config:methodType" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies HTTP request method.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="TestRequest">
+		<xs:complexContent>
+			<xs:extension base="config:RestRequest">
+				<xs:attribute name="Result" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>Specifies test response evaluation. Available template variables: connection, response.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="TokenAuthentication">
+		<xs:complexContent>
+			<xs:extension base="config:RestRequest">
+				<xs:sequence>
+					<xs:element name="Authorized" type="config:AuthorizedAuthentication" minOccurs="0" />
+					<xs:element name="Refresh" type="config:TokenRefresh" minOccurs="0" />
+				</xs:sequence>
+				<xs:attribute name="Result" type="xs:string" use="required">
+					<xs:annotation>
+						<xs:documentation>Specifies access token extraction expression. Available template variables: response.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:complexType name="AuthorizedAuthentication">
+		<xs:sequence>
+			<xs:element ref="config:Documentation" minOccurs="0" />
+		</xs:sequence>
+		<xs:attribute name="Id" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Specifies authorization identifier. Available template variables: connection.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="LocalListenUrl" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies URL of local listener for token verification.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Result" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies token extraction expression. Available template variables: response.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="TokenRefresh">
+		<xs:complexContent>
+			<xs:extension base="config:RestRequest">
+				<xs:attribute name="Result" type="xs:string" use="required">
+					<xs:annotation>
+						<xs:documentation>Specifies refresh token extraction expression. Available template variables: response, token.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="Expiration" type="xs:string" use="required">
+					<xs:annotation>
+						<xs:documentation>Specifies token expiration expression. Available template variables: response, token.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:complexType name="UserParameters">
+		<xs:sequence>
+			<xs:element name="Parameter" type="config:UserParameter" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="UserParameter">
+		<xs:sequence>
+			<xs:element ref="config:Documentation" minOccurs="0" />
+		</xs:sequence>
+		<xs:attribute name="Name" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Specifies parameter name.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Default" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies default parameter value.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Type" type="config:UserParameterType" default="regular">
+			<xs:annotation>
+				<xs:documentation>Specifies parameter type.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Enumerable" type="xs:boolean">
+			<xs:annotation>
+				<xs:documentation>Set if parameter is enumerable.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Editor" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Editor js.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:simpleType name="UserParameterType" final="restriction">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="regular" />
+			<xs:enumeration value="password" />
+			<xs:enumeration value="file" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:complexType name="External">
+		<xs:complexContent>
+			<xs:extension base="config:RestRequest">
+				<xs:attribute name="List" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>Specifies list extraction expression. Available template variables: response.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:complexType name="ExternalResource">
+		<xs:complexContent>
+			<xs:extension base="config:External">
+				<xs:sequence>
+					<xs:element ref="config:Resource" minOccurs="0" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:complexType name="ExternalField">
+		<xs:complexContent>
+			<xs:extension base="config:External">
+				<xs:sequence>
+					<xs:element name="Field" type="config:Field" minOccurs="0" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:element name="Resources">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="config:Template" minOccurs="0" />
+				<xs:element ref="config:Resource" minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="External" type="config:ExternalResource" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="Template">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Field" type="config:Field" minOccurs="0" maxOccurs="unbounded" />
+				<xs:element ref="config:Resource" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="Resource">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="config:Documentation" minOccurs="0" />
+				<xs:element ref="config:Service" minOccurs="0" />
+				<xs:element ref="config:Fields" minOccurs="0" />
+				<xs:element ref="config:Read" minOccurs="0" maxOccurs="unbounded" />
+				<xs:element ref="config:Create" minOccurs="0" />
+				<xs:element ref="config:Update" minOccurs="0" />
+				<xs:element ref="config:Delete" minOccurs="0" />
+				<xs:element ref="config:Upsert" minOccurs="0" />
+			</xs:sequence>
+			<xs:attribute name="Name" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>Specifies resource name. Available template variables: resource.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="Properties" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>Specifies additional resource properties. Available template variables: resource.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="Template" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>Specifies resource template.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="CanRead" type="xs:string" use="optional" default="true">
+				<xs:annotation>
+					<xs:documentation>Specifies if resource supports Read.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="CanCreate" type="xs:string" use="optional" default="true">
+				<xs:annotation>
+					<xs:documentation>Specifies if resource supports Create.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="CanUpdate" type="xs:string" use="optional" default="true">
+				<xs:annotation>
+					<xs:documentation>Specifies if resource supports Update.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="CanDelete" type="xs:string" use="optional" default="true">
+				<xs:annotation>
+					<xs:documentation>Specifies if resource supports Delete.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="CanUpsert" type="xs:string" use="optional" default="true">
+				<xs:annotation>
+					<xs:documentation>Specifies if resource supports Upsert.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="Fields">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="config:Documentation" minOccurs="0" />
+				<xs:element name="Field" type="config:Field" minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="Composition" type="config:Composition" minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="External" type="config:ExternalField" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="Template" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>Specifies fields template.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="CacheKey" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>Specifies fields caching key expression. Required if fields depend on user specified parameters. Available template variables: resource, parameters.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="Sort" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>Specifies fields sort expression. If not specified, fields will be alphabetically sorted. Available template variables: fields.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:complexType name="Field">
+		<xs:sequence>
+			<xs:element ref="config:Documentation" minOccurs="0" />
+			<xs:element ref="config:Get" minOccurs="0" />
+			<xs:element name="Set" type="config:Set" minOccurs="0" />
+			<xs:element name="Create" type="config:Set" minOccurs="0" />
+			<xs:element name="Update" type="config:Set" minOccurs="0" />
+			<xs:element name="Upsert" type="config:Set" minOccurs="0" />
+			<xs:element name="Component" type="config:Field" minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="Composition" type="config:Composition" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+		<xs:attribute name="Id" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies unique field identifier.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Name" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies JSON property name.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Template" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies field template.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="DataType" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies field data type.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Length" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies field length.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Precision" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies field precision.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Scale" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies field scale.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="IsKey" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies if field is key. Important for preparing HTTP requests that modify data.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="ReadOnly" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies if field is read only. If "true", the field will be ignored in HTTP requests that modify data.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Default" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies default field value (to be used during design-time).</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Composite" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies if field contains composite data (i.e. an array or a composite object).</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="IsArray" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies if field contains array data. If "true", the data would be available for processing in a separate input/output.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="Composition">
+		<xs:sequence>
+			<xs:element ref="config:Documentation" minOccurs="0" />
+			<xs:element ref="config:Get" minOccurs="0" />
+			<xs:element name="Set" type="config:Set" minOccurs="0" />
+			<xs:element name="Component" type="config:Field" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="RestParameters">
+		<xs:sequence>
+			<xs:element name="Parameter" type="config:RestParameter" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:simpleType name="RestParameterType" final="restriction">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="GetOrPost" />
+			<xs:enumeration value="QueryString" />
+			<xs:enumeration value="HttpHeader" />
+			<xs:enumeration value="Body" />
+			<xs:enumeration value="File" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:complexType name="RestParameter">
+		<xs:sequence>
+			<xs:element ref="config:Documentation" minOccurs="0" />
+		</xs:sequence>
+		<xs:attribute name="Name" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Specifies parameter name.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Value" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies parameter value.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Type" type="config:RestParameterType" default="GetOrPost">
+			<xs:annotation>
+				<xs:documentation>Specifies parameter type.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Default" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies default parameter value.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="FileName" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies file name parameter for file parameter type.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="MimeType" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies MIME type parameter for file parameter type.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:element name="Get">
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="config:RestRequest">
+					<xs:attribute name="Item" type="xs:string" use="optional">
+						<xs:annotation>
+							<xs:documentation>Specifies item extraction expression. Available template variables: response, resource, parameters, valueParent, item, field.</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+					<xs:attribute name="Value" type="xs:string" use="optional">
+						<xs:annotation>
+							<xs:documentation>Specifies value extraction expression. Available template variables: response, resource, parameters, valueParent, item, field</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="Input">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Case" type="config:Case" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:complexType name="Case">
+		<xs:complexContent>
+			<xs:extension base="config:RestRequest">
+				<xs:attribute name="For" type="xs:string" use="required">
+					<xs:annotation>
+						<xs:documentation>Specifies the value for which the Case applies to.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="Result" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>Specifies result extraction expression.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:complexType name="SetRequest">
+		<xs:complexContent>
+			<xs:restriction base="config:RestRequest">
+				<xs:sequence>
+					<xs:element ref="config:Documentation" minOccurs="0" />
+					<xs:element name="Parameters" type="config:RestParameters" minOccurs="0" />
+				</xs:sequence>
+				<xs:attribute name="Url" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>Specifies request URL.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="Method" type="config:methodType" default="POST">
+					<xs:annotation>
+						<xs:documentation>Specifies HTTP request method.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:restriction>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:complexType name="Set">
+		<xs:complexContent>
+			<xs:extension base="config:SetRequest">
+				<xs:sequence>
+					<xs:element ref="config:Input" minOccurs="0" />
+				</xs:sequence>
+				<xs:attribute name="Item" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>Specifies item setup expression. Available template variables: item.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="Value" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>Specifies value setup expression.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="Regular" type="xs:boolean" default="true">
+					<xs:annotation>
+						<xs:documentation>Specifies whether regular set is used.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:complexType name="Iterator">
+		<xs:sequence>
+			<xs:element name="Next" type="config:IteratorNext" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="IteratorNext">
+		<xs:sequence>
+			<xs:element name="Initialization" type="config:IteratorInitialization" minOccurs="0" />
+			<xs:element ref="config:Documentation" minOccurs="0" />
+		</xs:sequence>
+		<xs:attribute name="Value" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Specifies extraction expression for next iterator. Available template variables: parameters (fields, batchSize, iterator), response.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="IteratorInitialization">
+		<xs:complexContent>
+			<xs:extension base="config:RestRequest">
+				<xs:attribute name="Result" type="xs:string" use="required">
+					<xs:annotation>
+						<xs:documentation>Specifies result extraction expression. Available template variables: response, resource, parameters.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:element name="Read">
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="config:RestRequest">
+					<xs:sequence>
+						<xs:element name="Iterator" type="config:Iterator" minOccurs="0" />
+						<xs:element name="User" type="config:UserParameters" minOccurs="0" />
+					</xs:sequence>
+					<xs:attribute name="Id" type="xs:string" use="optional">
+						<xs:annotation>
+							<xs:documentation>Specifies a unique id of the API endpoint. Required, if there are multiple GET endpoints for the resource.</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+					<xs:attribute name="Label" type="xs:string" use="optional">
+						<xs:annotation>
+							<xs:documentation>Specifies a display name for the API endpoint.</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+					<xs:attribute name="Result" type="xs:string" use="optional">
+						<xs:annotation>
+							<xs:documentation>Specifies result extraction expression. Available template variables: response, resource, parameters.</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:simpleType name="methodType" final="restriction">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="GET" />
+			<xs:enumeration value="POST" />
+			<xs:enumeration value="PUT" />
+			<xs:enumeration value="DELETE" />
+			<xs:enumeration value="PATCH" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:complexType name="Action">
+		<xs:complexContent>
+			<xs:extension base="config:RestRequest">
+				<xs:sequence>
+					<xs:element ref="config:ErrorHandling" minOccurs="0" />
+					<xs:element name="User" type="config:UserParameters" minOccurs="0" />
+				</xs:sequence>
+				<xs:attribute name="BatchLimit" type="xs:int" use="optional">
+					<xs:annotation>
+						<xs:documentation>Specifies maximum number of records which can be processed in one batch.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="Result" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>Specifies result extraction expression. Available template variables: resource, parameters, batch (if batch action), response, item (single record).</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="ResultId" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>Specifies identifier element in result. Available template variables: resource.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:element name="Create">
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="config:Action" />
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="Update">
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="config:Action" />
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="Delete">
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="config:Action" />
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="Upsert">
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="config:Action" />
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="FileManager">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Root" type="config:FileManagerRoot" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:complexType name="FileManagerRoot">
+		<xs:sequence>
+			<xs:element name="Listing" type="config:FileManagerListing" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+		<xs:attribute name="Name" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies root name.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="GetPath" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies path transform expression. Available template variables: path.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="UploadFile" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies function implementing upload file. Available template variables: fromStream, toPath.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="DownloadFile" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies function implementing download file. Available template variables: path.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="SetFileTime" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies function setting modified file time.  Available template variables: path, time.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="CreateDirectory" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies function implementing create directory. Available template variables: path.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="DeleteDirectory" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies function implementing delete directory. Available template variables: path.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="DeleteFile" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies function implementing delete file. Available template variables: path.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="RenameFile" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies function implementing rename file. Available template variables: oldPath, newPath.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="GetListing" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies function implementing get file and folder listing. Available template variables: path.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="FileManagerListing">
+		<xs:sequence>
+			<xs:element name="Item" type="config:FileManagerItem" />
+		</xs:sequence>
+		<xs:attribute name="Resource" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Specifies resource for this listing.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Query" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Specifies listing retrieve query.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="FileManagerItem">
+		<xs:attribute name="FullName" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Specifies expression to extract item full name.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Size" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies expression to extract item size.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="ModifiedTime" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies expression to extract item modified time.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="IsDirectory" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>Specifies expression to extract if item is directory.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:element name="Script">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="config:Module" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="Module">
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="Name" type="xs:string" use="optional">
+						<xs:annotation>
+							<xs:documentation>Specifies module name.</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+
+</xs:schema>

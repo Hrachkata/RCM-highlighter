@@ -30,7 +30,7 @@ namespace RcmServer
         private readonly ILanguageServer _languageServer;
         // private readonly SchemaManager _schemaManager;
         private List<Diagnostic> _diagnostics;
-        private XmlTextReader schemaTextReader = new XmlTextReader(@"C:\Users\Tigan\Downloads\rcm.xsd");
+        private XmlTextReader schemaTextReader = new XmlTextReader(@"..\..\..\..\rcm.xsd");
         private XmlSchema schema;
         private XmlReaderSettings _settings;
 
@@ -77,6 +77,8 @@ namespace RcmServer
 
         public override async Task<Unit> Handle(DidChangeTextDocumentParams notification, CancellationToken token)
         {
+            await Task.Yield();
+
             _logger.Information("Changed text document.");
 
             TextDocumentContentChangeEvent changedEvent = null;
@@ -86,76 +88,24 @@ namespace RcmServer
                 changedEvent = item;
             }
 
-            XmlReader reader;
-            // Create the XmlReader object.
-            try
-            {
-                using (StringReader stringReader = new StringReader(changedEvent.Text))
-                using (XmlReader validator = XmlReader.Create(stringReader, settings))
-                {
-                    // Validate the entire xml file
-                    while ( validator.Read() );
-                }
-            }
-            catch (XmlException e)
-            {
-                var range = new Range(
-                    new Position(e.LineNumber - 1, e.LinePosition - 1),
-                    new Position(e.LineNumber - 1, e.LinePosition + 999));
+            var diagnosticArr = ValidateBySchema(changedEvent.Text, notification.TextDocument.Uri);
 
-                var currentDiagItem = new Diagnostic()
-                {
-                    Severity = DiagnosticSeverity.Error,
-                    Code = "banana",
-                    Message = e.Message,
-                    Source = "RCM-NET-server",
-                    Range = range
-                };
-
-                diagnostics.Add(currentDiagItem);
-            }
-
-            var publishDiagnosticsParams = new PublishDiagnosticsParams
-            {
-                Uri = notification.TextDocument.Uri,
-                Diagnostics = diagnostics
-            };
-
-            _languageServer.TextDocument.PublishDiagnostics(publishDiagnosticsParams);
+            _languageServer.TextDocument.PublishDiagnostics(diagnosticArr);
 
             diagnostics.Clear();
 
             return Unit.Value;
         }
 
-        // Display any warnings or errors.
-        private void ValidationCallBack(object? sender, ValidationEventArgs args)
-        {
-            var changedText = sender?.GetType().GetProperty("Name")?.GetValue(sender, null).ToString();
-
-            var range = new Range(
-                    new Position(args.Exception.LineNumber - 1, args.Exception.LinePosition - 1),
-                    new Position(args.Exception.LineNumber - 1, args.Exception.LinePosition + changedText.Length));
-
-
-            var currentDiagItem = new Diagnostic()
-            {
-                Severity = args.Severity == XmlSeverityType.Error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
-                Code = "banana",
-                Message = args.Message,
-                Source = "RCM-NET-server",
-                Range = range
-            };
-
-            diagnostics.Add(currentDiagItem);
-        }
-
         public override async Task<Unit> Handle(DidOpenTextDocumentParams notification, CancellationToken token)
         {
             await Task.Yield();
-            _logger.Information("Hello world!");
-            await _configuration.GetScopedConfiguration(notification.TextDocument.Uri, token).ConfigureAwait(false);
 
+            _logger.Information("Opened document.");
+
+            var diagnosticArr = ValidateBySchema(notification.TextDocument.Text, notification.TextDocument.Uri);
+
+            _languageServer.TextDocument.PublishDiagnostics(diagnosticArr);
 
             return Unit.Value;
         }
@@ -209,6 +159,69 @@ namespace RcmServer
                 throw new InvalidOperationException($"XML validation failed: {ex.Message}", ex);
             }
         }
+
+        // Display any warnings or errors.
+        private PublishDiagnosticsParams ValidateBySchema(string documentContent, DocumentUri documentUri)
+        {
+            XmlReader reader;
+            // Create the XmlReader object.
+            try
+            {
+                using (StringReader stringReader = new StringReader(documentContent))
+                using (XmlReader validator = XmlReader.Create(stringReader, settings))
+                {
+                    // Validate the entire xml file
+                    while (validator.Read()) ;
+                }
+            }
+            catch (XmlException e)
+            {
+                var range = new Range(
+                    new Position(e.LineNumber - 1, e.LinePosition - 1),
+                    new Position(e.LineNumber - 1, e.LinePosition + 999));
+
+                var currentDiagItem = new Diagnostic()
+                {
+                    Severity = DiagnosticSeverity.Error,
+                    Code = "banana",
+                    Message = e.Message,
+                    Source = "RCM-NET-server",
+                    Range = range
+                };
+
+                diagnostics.Add(currentDiagItem);
+            }
+
+            var publishDiagnosticsParams = new PublishDiagnosticsParams
+            {
+                Uri = documentUri,
+                Diagnostics = diagnostics
+            };
+
+            return publishDiagnosticsParams;
+        }
+
+        // Display any warnings or errors.
+        private void ValidationCallBack(object? sender, ValidationEventArgs args)
+        {
+            var changedText = sender?.GetType().GetProperty("Name")?.GetValue(sender, null).ToString();
+
+            var range = new Range(
+                    new Position(args.Exception.LineNumber - 1, args.Exception.LinePosition - 1),
+                    new Position(args.Exception.LineNumber - 1, args.Exception.LinePosition + changedText.Length - 1));
+
+
+            var currentDiagItem = new Diagnostic()
+            {
+                Severity = args.Severity == XmlSeverityType.Error ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
+                Code = "banana",
+                Message = args.Message,
+                Source = "RCM-NET-server",
+                Range = range
+            };
+
+            diagnostics.Add(currentDiagItem);
+        }
     }
 
     internal class MyDocumentSymbolHandler : IDocumentSymbolHandler
@@ -258,7 +271,7 @@ namespace RcmServer
                 }
             }
 
-            // await Task.Delay(2000, cancellationToken);
+            await Task.Delay(2000, cancellationToken);
             return symbols;
         }
 
