@@ -25,6 +25,25 @@ function activate(context) {
         }
     };
 
+
+    vscode.workspace.onDidChangeTextDocument((event) => {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor || event.document !== activeEditor.document) return;
+      
+        const cursorPos = activeEditor.selection.active;
+        const textBeforeCursor = event.document.getText(
+          new vscode.Range(cursorPos.with(undefined, 0), cursorPos)
+        );
+      
+        // Detect if the cursor is inside quotes after an attribute (e.g., Name="|")
+        const isInsideQuotes = /<[^\>]+\s+\w+=["'][^"']*$/.test(textBeforeCursor);
+      
+        if (isInsideQuotes) {
+          // Programmatically trigger suggestions
+          vscode.commands.executeCommand('editor.action.triggerSuggest');
+        }
+      });
+
     let client = new LanguageClient(
         'xmljs-rcm-highlight',  // Unique id for your client
         'XML JS RCM Language Client',

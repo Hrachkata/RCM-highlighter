@@ -8,8 +8,8 @@
 	targetNamespace="http://www.cozyroc.com/schema/rcm-config-1.0.xsd"
 	xmlns:config="http://www.cozyroc.com/schema/rcm-config-1.0.xsd"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema"
-	elementFormDefault="qualified"
-	xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">
+	xmlns:dsig="https://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd"
+	elementFormDefault="qualified">
 
 	<xs:import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="xmldsig-core-schema.xsd" />
 
@@ -31,6 +31,7 @@
 				<xs:element ref="config:Resources" minOccurs="0" />
 				<xs:element ref="config:FileManager" minOccurs="0" />
 				<xs:element ref="config:Script" minOccurs="0" />
+				<!-- <xs:element ref="dsig:Signature" minOccurs="0" maxOccurs="1" /> -->
 			</xs:sequence>
 			<xs:attribute name="Name" type="xs:string" use="required">
 				<xs:annotation>

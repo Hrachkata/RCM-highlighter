@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -27,12 +28,14 @@ namespace RcmServer
     {
         private readonly Serilog.ILogger _logger;
         private readonly ILanguageServerConfiguration _configuration;
+        private Cache cache;
         private readonly ILanguageServer _languageServer;
         // private readonly SchemaManager _schemaManager;
         private List<Diagnostic> _diagnostics;
         private XmlTextReader schemaTextReader = new XmlTextReader(@"..\..\..\..\rcm.xsd");
         private XmlSchema schema;
-        private XmlReaderSettings _settings;
+        private XmlReaderSettings _validationSettings;
+        private XmlReaderSettings _defaultSettings;
 
         private readonly TextDocumentSelector _textDocumentSelector = new TextDocumentSelector(
             new TextDocumentFilter
@@ -43,29 +46,46 @@ namespace RcmServer
 
         private List<Diagnostic> diagnostics { get => _diagnostics; set => _diagnostics = value; }
 
-        public XmlReaderSettings settings
+        public XmlReaderSettings validationSettings
         {
             get
             {
-                if (_settings == null)
+                if (_validationSettings == null)
                 {
-                    _settings = new XmlReaderSettings();
-                    _settings.ValidationType = ValidationType.Schema;
-                    _settings.Schemas.Add(schema);
-                    _settings.ValidationEventHandler += new ValidationEventHandler(ValidationCallBack);
-                    _settings.IgnoreComments = true;
+                    _validationSettings = new XmlReaderSettings();
+                    _validationSettings.ValidationType = ValidationType.Schema;
+                    _validationSettings.Schemas.Add(schema);
+                    _validationSettings.ValidationEventHandler += new ValidationEventHandler(ValidationCallBack);
+                    _validationSettings.IgnoreComments = true;
                 }
 
-                return _settings;
+                return _validationSettings;
             } 
-            set => _settings = value; 
+            set => _validationSettings = value; 
         }
 
-        public TextDocumentHandler(ILanguageServer languageServer, Serilog.ILogger logger, ILanguageServerConfiguration configuration, SchemaManager schemaManager)
+        public XmlReaderSettings defaultSettings
+        {
+            get
+            {
+                if (_defaultSettings == null)
+                {
+                    _defaultSettings = new XmlReaderSettings();
+                    _defaultSettings.IgnoreComments = true;
+                    _defaultSettings.Async = true;
+                }
+
+                return _defaultSettings;
+            }
+            set => _defaultSettings = value;
+        }
+
+        public TextDocumentHandler(ILanguageServer languageServer, Serilog.ILogger logger, ILanguageServerConfiguration configuration, SchemaManager schemaManager, Cache cacheService)
         {
             _languageServer = languageServer;
             _logger = logger;
             _configuration = configuration;
+            cache = cacheService;
             diagnostics = new List<Diagnostic>();
             schema = XmlSchema.Read(schemaTextReader, ValidationCallBack);
             // Invalid for now
@@ -120,7 +140,67 @@ namespace RcmServer
             return Unit.Task;
         }
 
-        public override Task<Unit> Handle(DidSaveTextDocumentParams notification, CancellationToken token) => Unit.Task;
+        public override async Task<Unit> Handle(DidSaveTextDocumentParams notification, CancellationToken token) {
+
+            var resourceNames = new HashSet<string>();
+            var fieldNames = new HashSet<string>();
+
+            using (StringReader stringReader = new StringReader(notification.Text))
+            using (XmlReader XMLdocReader = XmlReader.Create(stringReader, defaultSettings))
+            {
+                while (await XMLdocReader.ReadAsync()) {
+                    if (XMLdocReader.NodeType == XmlNodeType.Element)
+                    {
+                        bool insideTargetParent = false;
+                        string targetParent = "Template";
+                        string targetAttribute = "Name"; 
+
+                        while (await XMLdocReader.ReadAsync())
+                        {
+                            if (XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.Name == targetParent)
+                            {
+                                insideTargetParent = true;
+                            }
+                            else if (XMLdocReader.NodeType == XmlNodeType.EndElement && XMLdocReader.Name == targetParent)
+                            {
+                                break;
+                            }
+
+                            if (insideTargetParent && XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.HasAttributes)
+                            {
+                                string elementName = XMLdocReader.Name;
+
+                                string? attributeValue = XMLdocReader.GetAttribute(targetAttribute);
+
+                                if (attributeValue == null)
+                                {
+                                    continue;
+                                }
+
+                                switch (elementName)
+                                {
+                                    case "Resource":
+                                        resourceNames.Add(attributeValue);
+                                        break;
+                                    case "Field":
+                                        fieldNames.Add(attributeValue);
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            cache.ClearTemplateFieldCache();
+            cache.ClearTemplateResourceCache();
+            cache.UpdateTemplateFieldCache(fieldNames);
+            cache.UpdateTemplateResourceCache(resourceNames);
+
+            return Unit.Value; 
+        }
 
         protected override TextDocumentSyncRegistrationOptions CreateRegistrationOptions(TextSynchronizationCapability capability, ClientCapabilities clientCapabilities) => new TextDocumentSyncRegistrationOptions()
         {
@@ -160,15 +240,14 @@ namespace RcmServer
             }
         }
 
-        // Display any warnings or errors.
         private PublishDiagnosticsParams ValidateBySchema(string documentContent, DocumentUri documentUri)
         {
             XmlReader reader;
-            // Create the XmlReader object.
+
             try
             {
                 using (StringReader stringReader = new StringReader(documentContent))
-                using (XmlReader validator = XmlReader.Create(stringReader, settings))
+                using (XmlReader validator = XmlReader.Create(stringReader, validationSettings))
                 {
                     // Validate the entire xml file
                     while (validator.Read()) ;
@@ -201,7 +280,6 @@ namespace RcmServer
             return publishDiagnosticsParams;
         }
 
-        // Display any warnings or errors.
         private void ValidationCallBack(object? sender, ValidationEventArgs args)
         {
             var changedText = sender?.GetType().GetProperty("Name")?.GetValue(sender, null).ToString();

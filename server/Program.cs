@@ -24,13 +24,15 @@ namespace RcmServer
 
         private static async Task MainAsync(string[] args)
         {
+            // Useless, remove later, logging is for nerds
             Log.Logger = new LoggerConfiguration()
                         .Enrich.FromLogContext()
                         .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day)
                         .MinimumLevel.Verbose()
                         .CreateLogger();
-
             Log.Logger.Information("The server starts at least.");
+
+            var cacheService = new Cache();
 
             IObserver<WorkDoneProgressReport> workDone = null!;
 
@@ -55,28 +57,16 @@ namespace RcmServer
                             services =>
                             {
                                 services.AddSingleton(
-                                    provider =>
-                                    {
-                                        return new Foo(Log.Logger);
-                                    }
-                                );
-                                services.AddSingleton(
                                     schemaManger =>
                                     {
                                         var schemaManager = new SchemaManager();
                                         schemaManager.GetSchemaAsync("https://www.cozyroc.com/sites/default/files/down/schema/rcm-config-1.0.xsd").Wait();
                                         return schemaManager;
                                     }
-                                );
-                                services.AddSingleton(
-                                    new ConfigurationItem
-                                    {
-                                        Section = "xml",
-                                    }
                                 ).AddSingleton(
-                                    new ConfigurationItem
+                                    cache =>
                                     {
-                                        Section = "terminal",
+                                        return cacheService;
                                     }
                                 );
                             }
@@ -84,55 +74,19 @@ namespace RcmServer
                        .OnInitialize(
                             async (server, request, token) =>
                             {
-                                await Task.Delay(2000).ConfigureAwait(false);
+                                //await Task.Delay(2000).ConfigureAwait(false);
                             }
                         )
                        .OnStarted(
                             async (languageServer, token) =>
                             {
-                                using var manager = await languageServer.WorkDoneManager.Create(new WorkDoneProgressBegin { Title = "Doing some work..." })
-                                                                        .ConfigureAwait(false);
-
-
-                                var logger = languageServer.Services.GetService<ILogger<Foo>>();
-                                var configuration = await languageServer.Configuration.GetConfiguration(
-                                    new ConfigurationItem
-                                    {
-                                        Section = "xml",
-                                    }, new ConfigurationItem
-                                    {
-                                        Section = "terminal",
-                                    }
-                                ).ConfigureAwait(false);
-
-                                var baseConfig = new JObject();
-                                foreach (var config in languageServer.Configuration.AsEnumerable())
-                                {
-                                    baseConfig.Add(config.Key, config.Value);
-                                }
-
-                                logger.LogInformation("Base Config: {@Config}", baseConfig);
-
-                                var scopedConfig = new JObject();
-                                foreach (var config in configuration.AsEnumerable())
-                                {
-                                    scopedConfig.Add(config.Key, config.Value);
-                                }
-
-                                logger.LogInformation("Scoped Config: {@Config}", scopedConfig);
+                               
                             }
                         )
             ).ConfigureAwait(false);
 
-            var test = new TextDocumentHandler(server, Log.Logger, server.Configuration, server.GetService<SchemaManager>());
-
-            server.GetRequiredService<SchemaManager>();
-
-            server.Register(registry => { registry.AddHandler(test); });
-
-            //var test = new ChangeHandler(server);
-            //
-            //server.HandlersManager.Add(test);
+            var documentHandler = new TextDocumentHandler(server, Log.Logger, server.Configuration, server.GetService<SchemaManager>(), cacheService);
+            server.Register(registry => { registry.AddHandler(documentHandler); });
 
             await server.WaitForExit.ConfigureAwait(false);
         }

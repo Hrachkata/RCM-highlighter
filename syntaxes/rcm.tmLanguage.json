@@ -22,8 +22,8 @@
 				},
 				{
 					"contentName": "meta.embedded.attribute.js",
-					"begin": "\".*?{{=",
-					"end": "}}.*?\"",
+					"begin": "{{=",
+					"end": "}}",
 					"patterns": [
 						{
 							"include": "source.js"
