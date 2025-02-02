@@ -3,8 +3,8 @@ const path = require('path');
 const {
 	JsVirtualDocumentProvider,
 	updateDiagnostics,
-	getJsCompletions,
 	dontValidate,
+	refreshEslintConfig
 } = require('./ESLintValidator');
 
 const {
@@ -15,6 +15,8 @@ const {
 const languageServerPathDebug = "server/bin/Debug/net5.0/RcmServer.dll";
 const languageServerPathRelease = "server/bin/Release/net5.0/RcmServer.dll";
 const languageServerDll = "RcmServer.dll";
+
+virtualProvider = new JsVirtualDocumentProvider();
 
 function activate(context) {
 	let workPathDebug = path.dirname(context.asAbsolutePath(languageServerPathDebug));
@@ -86,7 +88,6 @@ function activate(context) {
 	context.subscriptions.push(client);
 
 	// Setup virtual document provider
-	virtualProvider = new JsVirtualDocumentProvider();
 	context.subscriptions.push(
 		vscode.workspace.registerTextDocumentContentProvider('js-in-xml', virtualProvider)
 	);
@@ -161,5 +162,6 @@ setInterval(() => {
 
 module.exports = {
 	activate,
-	deactivate: () => client ? client.stop() : undefined
+	deactivate: () => client ? client.stop() : undefined,
+	virtualProvider
 };
