@@ -26,6 +26,11 @@ namespace RcmServer
             return result;
         }
 
+        public HashSet<string> GetFields()
+        {
+            return _templateFieldCache;
+        }
+
         public void UpdateTemplateResourceCache(HashSet<string> templateNames)
         {
             _templateResourceCache = templateNames;
@@ -41,6 +46,11 @@ namespace RcmServer
             string result;
             _templateResourceCache.TryGetValue(key, out result);
             return result;
+        }
+
+        public HashSet<string> GetResources()
+        {
+            return _templateResourceCache;
         }
     }
 }
