@@ -1,15 +1,23 @@
 const vscode = require('vscode');
 const path = require('path');
+
 const {
-	JsVirtualDocumentProvider,
+	LanguageClient
+} = require('vscode-languageclient/node');
+
+const {
 	updateDiagnostics,
 	dontValidate,
 	refreshEslintConfig
 } = require('./ESLintValidator');
 
 const {
-	LanguageClient
-} = require('vscode-languageclient/node');
+	getJsCompletions
+} = require('./CompletionService');
+
+const {
+	JsVirtualDocumentProvider
+} = require('./JsVirtualDocumentProvider');
 
 
 const languageServerPathDebug = "server/bin/Debug/net5.0/RcmServer.dll";
@@ -135,7 +143,7 @@ function activate(context) {
 	context.subscriptions.push(
 		vscode.languages.registerCompletionItemProvider('xml', {
 			async provideCompletionItems(document, position) {
-				let completions = getJsCompletions(document, position);
+				let completions = getJsCompletions(document, position, virtualProvider);
 				return completions;
 			}
 		}, '=', '{') // Trigger characters

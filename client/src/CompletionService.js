@@ -1,12 +1,9 @@
 const vscode = require('vscode');
-const {
-	virtualProvider,
-} = require('./client.js');
 
 // ----------------------------
 // 6. Completion Logic
 // ----------------------------
-async function getJsCompletions(document, position) {
+async function getJsCompletions(document, position, virtualProvider) {
 	const block = findJsBlockAtPosition(document, position);
 	if (!block) return [];
 
