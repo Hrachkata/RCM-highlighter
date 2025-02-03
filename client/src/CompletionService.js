@@ -1,38 +1,87 @@
 const vscode = require('vscode');
 
+const virtualDocCache = new Map();
+var completionCache = new vscode.CompletionList();
+
+async function getCachedVirtualUri(virtualUri, block){
+    const cached = virtualDocCache.get(virtualUri.toString());
+    const needsUpdate = !cached || cached.version !== block.version;
+
+    if (needsUpdate) {
+        // Update content only when changed
+        virtualProvider.updateDocument(virtualUri, block.code);
+        virtualDocCache.set(virtualUri.toString(), {
+            version: block.version,
+            doc: await vscode.workspace.openTextDocument(virtualUri)
+        });
+    }
+}
+
 async function getJsCompletions(document, position) {
     const block = findJsBlockAtPosition(document, position);
     if (!block) return [];
 
     // Create isolated virtual document for this block
     const virtualUri = vscode.Uri.parse(
-        `js-in-xml://${document.uri.path}/block_${block.startLine}.js?ts=${Date.now()}`
+        `js-in-xml://${document.uri.path}/block_${block.startLine}.js`
     );
     
-    // Use only the current block's code
-    virtualProvider.updateDocument(virtualUri, block.code);
-
     // Calculate precise virtual position
     const virtualPosition = new vscode.Position(
         position.line - block.startLine,
         position.character - (position.line === block.startLine ? block.startCol : 0)
     );
 
+    const cached = getCachedVirtualUri(virtualUri, block);
+
     try {
         // Get raw completions from VS Code's JS engine
-        const completions = await vscode.commands.executeCommand(
+        let completions = await vscode.commands.executeCommand(
             'vscode.executeCompletionItemProvider',
             virtualUri,
-            virtualPosition
+            virtualPosition,
+            undefined,
+            20
         );
 
+        let result = new vscode.CompletionList();
+
         // Map completion ranges back to original document
-        return completions.items.map(item => ({
-            ...item,
-            range: item.range ? mapRangeToOriginal(item.range, block) : undefined
-        }));
+        completions.items.flatMap(item => {
+                if (!item || item?.kind != 5) {
+                    result.items.push({
+                        ...item,
+                        range: item.range ? mapRangeToOriginal(item.range, block) : undefined
+                    });
+                };
+            });
+
+        completionCache = result;
+        return result;
+
     } catch (error) {
         console.error('Completion error:', error);
+        return [];
+    }
+}
+
+async function getPropertyAccessCompletions(document, position) {
+    // Move position back by 1 to capture the '.' character
+
+    try {
+        if (completionCache) { 
+            let currentRange = new vscode.Range(
+                position.with(undefined, position.character),
+                position
+            )
+    
+            return completionCache.items.map(item => ({
+                ...item,
+                range: currentRange
+            }));
+        }
+    } catch (error) {
+        console.error('Property completion error:', error);
         return [];
     }
 }
@@ -75,4 +124,4 @@ function findJsBlockAtPosition(document, position) {
     return null;
 }
 
-module.exports = { getJsCompletions };
+module.exports = { getJsCompletions, getPropertyAccessCompletions };

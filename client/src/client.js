@@ -12,7 +12,8 @@ const {
 } = require('./ESLintValidator');
 
 const {
-	getJsCompletions
+	getJsCompletions,
+	getPropertyAccessCompletions
 } = require('./CompletionService');
 
 const {
@@ -51,6 +52,10 @@ function activate(context) {
 		documentSelector: [{
 			scheme: 'file',
 			language: 'xml'
+		},
+		{
+			scheme: 'file',
+			language: 'rcm'
 		}],
 		synchronize: {
 			fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc')
@@ -81,7 +86,7 @@ function activate(context) {
 			if (isInsideQuotes) {
 				vscode.commands.executeCommand('editor.action.triggerSuggest');
 			}
-		}, 100); // Small delay to ensure cursor position is updated
+		}, 300); // Small delay to ensure cursor position is updated
 	});
 
 	let client = new LanguageClient(
@@ -91,9 +96,8 @@ function activate(context) {
 		clientOptions
 	);
 
-	client.start();
-
 	context.subscriptions.push(client);
+
 
 	// Setup virtual document provider
 	context.subscriptions.push(
@@ -116,24 +120,22 @@ function activate(context) {
 	vscode.workspace.onDidOpenTextDocument(doc => {
 		setTimeout(() => updateDiagnostics(doc, diagnostics), 1000);
 	});
-
-	// Changed active document refresh lint and clear diagnostics
-	vscode.window.onDidChangeActiveTextEditor(editor => {
-		if (editor) {
-			const filePath = editor.document.uri.fsPath;
-			let fileName = filenameRegex.exec(filePath)[0];
-			dontValidate.push(fileName);
-			refreshEslintConfig();
-		}
+	
+	vscode.languages.setLanguageConfiguration('javascript', {
+		wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g
 	});
 
 	const filenameRegex = /[ \w]+(?=[.])/;
 	// Changed active document refresh lint and clear diagnostics
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		let fileNameMatch = filenameRegex.exec(vscode.window.activeTextEditor.document.fileName);
-		if(fileNameMatch != null && fileNameMatch.length === 1 && !dontValidate.includes(fileName[0])){
-			dontValidate.push(fileNameMatch[0]);
-			refreshEslintConfig();
+		if (fileNameMatch != null && fileNameMatch.length === 1 ) {
+			let fileName = fileNameMatch[0].replaceAll(' ', '');
+
+			if ( !dontValidate.includes(fileName) ) {
+				dontValidate.push(fileName)
+				refreshEslintConfig();
+			} 
 		}
 	});
 
@@ -142,12 +144,18 @@ function activate(context) {
 	// ----------------------------
 	context.subscriptions.push(
 		vscode.languages.registerCompletionItemProvider('xml', {
-			async provideCompletionItems(document, position) {
+			async provideCompletionItems(document, position, token, context) {
+				if (context.triggerCharacter === '.') {
+					return getPropertyAccessCompletions(document, position);
+				}
+				
 				let completions = getJsCompletions(document, position, virtualProvider);
 				return completions;
 			}
-		}, '=', '{') // Trigger characters
+		}, '=', '.') // Trigger characters
 	);
+
+	client.start();
 }
 
 setInterval(() => {
@@ -170,6 +178,9 @@ setInterval(() => {
 
 module.exports = {
 	activate,
-	deactivate: () => client ? client.stop() : undefined,
+	deactivate: () => { 
+		client ? client.stop() : undefined;
+		this.virtualProvider = null;
+	},
 	virtualProvider
 };

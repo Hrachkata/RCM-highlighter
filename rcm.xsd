@@ -450,6 +450,11 @@
 				<xs:documentation>Specifies if field contains array data. If "true", the data would be available for processing in a separate input/output.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+		<xs:attribute name="AutoSelectForRead" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>SOMETHING SOMETHING</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 
 	<xs:complexType name="Composition">
@@ -611,7 +616,7 @@
 
 	<xs:complexType name="IteratorNext">
 		<xs:sequence>
-			<xs:element name="Initialization" type="config:IteratorInitialization" minOccurs="0" />
+			<xs:element name="Initialization" type="IteratorInitialization" minOccurs="0" />
 			<xs:element ref="config:Documentation" minOccurs="0" />
 		</xs:sequence>
 		<xs:attribute name="Value" type="xs:string" use="required">
@@ -789,6 +794,16 @@
 		<xs:attribute name="GetListing" type="xs:string" use="optional">
 			<xs:annotation>
 				<xs:documentation>Specifies function implementing get file and folder listing. Available template variables: path.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="SetOptions" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>SOMETHING SOMETHING</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="FlatNamespace" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>SOMETHING SOMETHING</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>
