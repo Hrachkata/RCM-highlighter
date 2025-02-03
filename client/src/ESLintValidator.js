@@ -72,9 +72,9 @@ function findJsBlocks(content) {
 	}) => {
 		let match;
 		while ((match = regex.exec(content)) !== null) {
-			const linesBefore = content.substring(0, match.index).split('\n').length - 1;
+			const linesBefore = content.substring(0, match.index).split('\n').length - 2;
 			blocks.push({
-				code: match[1].trim(),
+				code: match[1],
 				startLine: linesBefore + lineOffset
 			});
 		}

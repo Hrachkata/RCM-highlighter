@@ -121,6 +121,8 @@ namespace RcmServer
         {
             await Task.Yield();
 
+            UpdateTemplateCompletionCache(notification.TextDocument.Text);
+
             _logger.Information("Opened document.");
 
             var diagnosticArr = ValidateBySchema(notification.TextDocument.Text, notification.TextDocument.Uri);
@@ -140,20 +142,27 @@ namespace RcmServer
             return Unit.Task;
         }
 
-        public override async Task<Unit> Handle(DidSaveTextDocumentParams notification, CancellationToken token) {
+        public override async Task<Unit> Handle(DidSaveTextDocumentParams notification, CancellationToken token)
+        {
+            UpdateTemplateCompletionCache(notification.Text);
+            return Unit.Value;
+        }
 
+        private async void UpdateTemplateCompletionCache(string text)
+        {
             var resourceNames = new HashSet<string>();
             var fieldNames = new HashSet<string>();
 
-            using (StringReader stringReader = new StringReader(notification.Text))
+            using (StringReader stringReader = new StringReader(text))
             using (XmlReader XMLdocReader = XmlReader.Create(stringReader, defaultSettings))
             {
-                while (await XMLdocReader.ReadAsync()) {
+                while (await XMLdocReader.ReadAsync())
+                {
                     if (XMLdocReader.NodeType == XmlNodeType.Element)
                     {
                         bool insideTargetParent = false;
                         string targetParent = "Template";
-                        string targetAttribute = "Name"; 
+                        string targetAttribute = "Name";
 
                         while (await XMLdocReader.ReadAsync())
                         {
@@ -198,8 +207,6 @@ namespace RcmServer
             cache.ClearTemplateResourceCache();
             cache.UpdateTemplateFieldCache(fieldNames);
             cache.UpdateTemplateResourceCache(resourceNames);
-
-            return Unit.Value; 
         }
 
         protected override TextDocumentSyncRegistrationOptions CreateRegistrationOptions(TextSynchronizationCapability capability, ClientCapabilities clientCapabilities) => new TextDocumentSyncRegistrationOptions()
