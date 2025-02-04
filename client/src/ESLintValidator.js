@@ -17,18 +17,21 @@ eslintInstance = new ESLint(getESLintConfig());
 // 5. Diagnostic Utilities
 // ----------------------------
 async function updateDiagnostics(document, collection) {
-	const blocks = findJsBlocks(document.getText());
+	const block = findJsBlocks(document.getText());
+
+	if (!block) {
+		return;
+	}
+
 	const allDiagnostics = [];
 
-	for (const block of blocks) {
-		try {
-			const results = await eslintInstance.lintText(block.code);
-			results[0].messages.forEach(message => {
-				allDiagnostics.push(createDiagnostic(message, block.startLine));
-			});
-		} catch (error) {
-			console.error('ESLint error:', error);
-		}
+	try {
+		const results = await eslintInstance.lintText(block.cleanedJs);
+		results[0].messages.forEach(message => {
+			allDiagnostics.push(createDiagnostic(message, block.startLine));
+		});
+	} catch (error) {
+		console.error('ESLint error:', error);
 	}
 
 	collection.set(document.uri, allDiagnostics);
@@ -52,35 +55,39 @@ function createDiagnostic(message, startLine) {
 }
 
 
-
 // maybe add the attribute js?
-const jsCodeBlockPatterns = [
-	{
-		regex: /<!\[CDATA\[([\s\S]*?)\]\]>/g,
-		lineOffset: 1
-	}];
-
+const jsCodePatterndirty =  /<!\[CDATA\[(\s)*([\s\S]*)\]\]>/gd;
+const elementsInsideDirtyCodePattern = /]]>[\s\S]*?<!\[CDATA\[.*\n?/gd;
+const newlineRegex =  /\n/g
+const newline =  '\n';
 // ----------------------------
 // 7. Block Detection Utilities
 // ----------------------------
 function findJsBlocks(content) {
-	const blocks = [];
+	let JSdirty = jsCodePatterndirty.exec(content);
+	if (!JSdirty) {
+		return;	
+	} 
 
-	jsCodeBlockPatterns.forEach(({
-		regex,
-		lineOffset
-	}) => {
-		let match;
-		while ((match = regex.exec(content)) !== null) {
-			const linesBefore = content.substring(0, match.index).split('\n').length - 2;
-			blocks.push({
-				code: match[1],
-				startLine: linesBefore + lineOffset
-			});
-		}
-	});
+	let allJsCodeDirty = JSdirty[2];
 
-	return blocks;
+	var match = elementsInsideDirtyCodePattern.exec(allJsCodeDirty);
+
+	while( match ){
+		let replacementNewlineCount = match[0].match(newlineRegex)?.length || 0;
+		let replacement = newline.repeat(replacementNewlineCount);
+		allJsCodeDirty = allJsCodeDirty.replace(match[0], replacement);
+		match = elementsInsideDirtyCodePattern.exec(allJsCodeDirty);
+	}
+
+	const linesBefore = content.substring(0, JSdirty.index).split('\n').length;
+
+	let resultObj = {
+		cleanedJs: allJsCodeDirty,
+		startLine: linesBefore
+	}
+
+	return resultObj;
 }
 
 function refreshEslintConfig(){
