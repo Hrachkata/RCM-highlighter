@@ -201,14 +201,14 @@ namespace RcmServer
 
             var uri = request.TextDocument.Uri.Path;
             var currentLine = ReadCurrentLine(uri.Substring(1, uri.Length - 1), request.Position.Line + 1);
-            currentLine = currentLine.Replace("\"", "");
+            currentLine = currentLine.Replace("\"", "-");
             // <Component Name="action" Template="ShortText" />
             // matches
             // Template="S
-            var templateLiteralRegex = new Regex(@"(Template.*=.*?)(.)");
-            var position = templateLiteralRegex.Match(currentLine).Groups[2].Index + 1;
+            var templateLiteralRegex = new Regex(@"(Template.*?=.*?)(.)");
+            var position = templateLiteralRegex.Match(currentLine).Groups[2].Index + 2;
 
-            if (position + 3 != request.Position.Character)
+            if (position != request.Position.Character)
             {
                 return Task.FromResult(new CompletionList(items));
             }
