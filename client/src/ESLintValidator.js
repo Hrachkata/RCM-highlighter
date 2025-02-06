@@ -56,7 +56,7 @@ function createDiagnostic(message, startLine) {
 
 
 // maybe add the attribute js?
-const jsCodePatterndirty =  /<!\[CDATA\[(\s)*([\s\S]*)\]\]>/gd;
+const jsCodePatterndirty =  /<!\[CDATA\[(\s)*?([\s\S]*)\]\]>/gd;
 const elementsInsideDirtyCodePattern = /]]>[\s\S]*?<!\[CDATA\[.*\n?/gd;
 const newlineRegex =  /\n/g
 const newline =  '\n';
@@ -84,7 +84,7 @@ function findJsBlocks(content) {
 
 	let resultObj = {
 		cleanedJs: allJsCodeDirty,
-		startLine: linesBefore
+		startLine: linesBefore - 1
 	}
 
 	return resultObj;

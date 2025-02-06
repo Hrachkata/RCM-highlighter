@@ -121,13 +121,13 @@ namespace RcmServer
         {
             await Task.Yield();
 
-            UpdateTemplateCompletionCache(notification.TextDocument.Text);
-
-            _logger.Information("Opened document.");
-
             var diagnosticArr = ValidateBySchema(notification.TextDocument.Text, notification.TextDocument.Uri);
 
             _languageServer.TextDocument.PublishDiagnostics(diagnosticArr);
+
+             UpdateTemplateCompletionCache(notification.TextDocument.Text);
+
+            _logger.Information("Opened document.");
 
             return Unit.Value;
         }
@@ -148,6 +148,7 @@ namespace RcmServer
             return Unit.Value;
         }
 
+        // A shit, useless, trash function, probably use some kind of cache from the DidChangeTextDocument
         private async void UpdateTemplateCompletionCache(string text)
         {
             var resourceNames = new HashSet<string>();
@@ -163,41 +164,47 @@ namespace RcmServer
                         bool insideTargetParent = false;
                         string targetParent = "Template";
                         string targetAttribute = "Name";
-
-                        while (await XMLdocReader.ReadAsync())
+                        try
                         {
-                            if (XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.Name == targetParent)
+                            while (await XMLdocReader.ReadAsync())
                             {
-                                insideTargetParent = true;
-                            }
-                            else if (XMLdocReader.NodeType == XmlNodeType.EndElement && XMLdocReader.Name == targetParent)
-                            {
-                                break;
-                            }
-
-                            if (insideTargetParent && XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.HasAttributes)
-                            {
-                                string elementName = XMLdocReader.Name;
-
-                                string? attributeValue = XMLdocReader.GetAttribute(targetAttribute);
-
-                                if (attributeValue == null)
+                                if (XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.Name == targetParent)
                                 {
-                                    continue;
+                                    insideTargetParent = true;
+                                }
+                                else if (XMLdocReader.NodeType == XmlNodeType.EndElement && XMLdocReader.Name == targetParent)
+                                {
+                                    break;
                                 }
 
-                                switch (elementName)
+                                if (insideTargetParent && XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.HasAttributes)
                                 {
-                                    case "Resource":
-                                        resourceNames.Add(attributeValue);
-                                        break;
-                                    case "Field":
-                                        fieldNames.Add(attributeValue);
-                                        break;
-                                    default:
-                                        break;
+                                    string elementName = XMLdocReader.Name;
+
+                                    string? attributeValue = XMLdocReader.GetAttribute(targetAttribute);
+
+                                    if (attributeValue == null)
+                                    {
+                                        continue;
+                                    }
+
+                                    switch (elementName)
+                                    {
+                                        case "Resource":
+                                            resourceNames.Add(attributeValue);
+                                            break;
+                                        case "Field":
+                                            fieldNames.Add(attributeValue);
+                                            break;
+                                        default:
+                                            break;
+                                    }
                                 }
                             }
+                        }
+                        catch (Exception)
+                        {
+                            return;
                         }
                     }
                 }
