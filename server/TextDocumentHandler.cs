@@ -204,6 +204,10 @@ namespace RcmServer
                         }
                         catch (Exception)
                         {
+                            cache.ClearTemplateFieldCache();
+                            cache.ClearTemplateResourceCache();
+                            cache.UpdateTemplateFieldCache(fieldNames);
+                            cache.UpdateTemplateResourceCache(resourceNames);
                             return;
                         }
                     }
@@ -297,6 +301,11 @@ namespace RcmServer
         private void ValidationCallBack(object? sender, ValidationEventArgs args)
         {
             var changedText = sender?.GetType().GetProperty("Name")?.GetValue(sender, null).ToString();
+
+            if (changedText == null)
+            {
+                return;
+            }
 
             var range = new Range(
                     new Position(args.Exception.LineNumber - 1, args.Exception.LinePosition - 1),

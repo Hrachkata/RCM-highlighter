@@ -128,15 +128,6 @@ function activate(context) {
 	const filenameRegex = /[ \w]+(?=[.])/;
 	// Changed active document refresh lint and clear diagnostics
 	vscode.window.onDidChangeActiveTextEditor(editor => {
-		let fileNameMatch = filenameRegex.exec(vscode.window.activeTextEditor.document.fileName);
-		if (fileNameMatch != null && fileNameMatch.length === 1 ) {
-			let fileName = fileNameMatch[0].replaceAll(' ', '');
-
-			if ( !dontValidate.includes(fileName) ) {
-				dontValidate.push(fileName)
-				refreshEslintConfig();
-			} 
-		}
 	});
 
 	// ----------------------------
@@ -170,7 +161,7 @@ setInterval(() => {
 	const activeUris = new Set(
 		vscode.window.visibleTextEditors
 			.flatMap(editor =>
-				getVirtualUrisForDocument(editor.document) // Your logic to find associated virtual URIs
+				getVirtualUrisForDocument(editor.document) 
 			)
 	);
 	virtualProvider.purgeInactive(activeUris);

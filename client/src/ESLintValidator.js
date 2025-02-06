@@ -3,7 +3,9 @@ const {
 	ESLint
 } = require('eslint');
 
-var dontValidate = ['require', 'getClrType', '_', 's', 'connection', 'user', 'token', 'UI', 'Uri', 'Base64'];
+var dontValidate = ['require', 'getClrType', '_', 's', 'connection', 'user', 'token', 'UI', 'Uri', 'Base64', 'OAuth2', 'alert', 'doT', 'RestConnection', 
+					'utils', 'OAuth1', 'b64_hmac_sha1', 'json2xml', 'aws4s', 'SOAP', 'b64_hmac_sha256', 'dateFormat', 'hex_hmac_sha256', 'hex_hmac_sha1',
+					'Google', 'xml2json']
 const diagnosticSource = 'ESLint-integrated-srv'
 
 const filenameRegex = /[ \w]+(?=[.])/;

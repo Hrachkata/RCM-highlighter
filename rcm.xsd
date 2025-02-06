@@ -255,6 +255,11 @@
 						<xs:documentation>Specifies list extraction expression. Available template variables: response.</xs:documentation>
 					</xs:annotation>
 				</xs:attribute>
+				<xs:attribute name="CreateOrAlter" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>Something something</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -616,7 +621,13 @@
 
 	<xs:complexType name="IteratorNext">
 		<xs:sequence>
-			<!-- <xs:element name="Initialization" type="config:IteratorInitialization" minOccurs="0" /> -->
+			<xs:element name="Initialization" minOccurs="0">
+				<xs:attribute name="Result" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>Something something.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:element>
 			<xs:element ref="config:Documentation" minOccurs="0" />
 		</xs:sequence>
 		<xs:attribute name="Value" type="xs:string" use="required">
@@ -625,18 +636,6 @@
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>
-
-	<!-- <xs:complexType name="IteratorInitialization"> -->
-		<!-- <xs:complexContent> -->
-			<!-- <xs:extension base="config:RestRequest"> -->
-				<!-- <xs:attribute name="Result" type="xs:string" use="required"> -->
-					<!-- <xs:annotation> -->
-						<!-- <xs:documentation>Specifies result extraction expression. Available template variables: response, resource, parameters.</xs:documentation> -->
-					<!-- </xs:annotation> -->
-				<!-- </xs:attribute> -->
-			<!-- </xs:extension> -->
-		<!-- </xs:complexContent> -->
-	<!-- </xs:complexType> -->
 
 	<xs:element name="Read">
 		<xs:complexType>
@@ -705,7 +704,13 @@
 	<xs:element name="Create">
 		<xs:complexType>
 			<xs:complexContent>
-				<xs:extension base="config:Action" />
+				<xs:extension base="config:Action">
+					<xs:attribute name="BodyRequired" type="xs:string" use="optional">
+						<xs:annotation>
+							<xs:documentation>something something</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+				</xs:extension>
 			</xs:complexContent>
 		</xs:complexType>
 	</xs:element>
@@ -713,7 +718,13 @@
 	<xs:element name="Update">
 		<xs:complexType>
 			<xs:complexContent>
-				<xs:extension base="config:Action" />
+				<xs:extension base="config:Action" >
+					<xs:attribute name="BodyRequired" type="xs:string" use="optional">
+						<xs:annotation>
+							<xs:documentation>something something</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+				</xs:extension>
 			</xs:complexContent>
 		</xs:complexType>
 	</xs:element>
@@ -721,7 +732,13 @@
 	<xs:element name="Delete">
 		<xs:complexType>
 			<xs:complexContent>
-				<xs:extension base="config:Action" />
+				<xs:extension base="config:Action" >
+					<xs:attribute name="BodyRequired" type="xs:string" use="optional">
+						<xs:annotation>
+							<xs:documentation>something something</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+				</xs:extension>
 			</xs:complexContent>
 		</xs:complexType>
 	</xs:element>
@@ -729,7 +746,13 @@
 	<xs:element name="Upsert">
 		<xs:complexType>
 			<xs:complexContent>
-				<xs:extension base="config:Action" />
+				<xs:extension base="config:Action" >
+					<xs:attribute name="BodyRequired" type="xs:string" use="optional">
+						<xs:annotation>
+							<xs:documentation>something something</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+				</xs:extension>
 			</xs:complexContent>
 		</xs:complexType>
 	</xs:element>
