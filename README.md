@@ -4,7 +4,7 @@ Enables JS highlighting inside XML. For the extension to work your JS has to be 
 
 ![example.png](images/example.png)
 
-## Installation
+## Installation for the cool kids
 
 1. Slap an npm install while in the home directory
 2. Build the C# project located in the server directory
@@ -12,6 +12,11 @@ Enables JS highlighting inside XML. For the extension to work your JS has to be 
 4. Open any mixed XML file
 5. There should be JS highlighting and XML suggestions
 6. If there isn't, good luck ¯\\_(ツ)\_/¯
+
+## Installation for the cool kids that are lazy
+
+1. Install the VSIX
+2. If your computer still works, great job
 
 ## Debugging
 
