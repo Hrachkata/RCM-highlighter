@@ -1,4 +1,4 @@
 .gitignore
-images
+images/example.png
 README.md
 client/node-modules/**

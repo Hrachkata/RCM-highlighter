@@ -1,61 +1,79 @@
 {
-  "name": "xmljs-rcm-highlight",
-  "displayName": "XML-JS RCM highlighter",
-  "description": "An extension that enables highlighting specifically for RCM development.",
-  "publisher": "Hrachkata",
-  "version": "1.0.0",
-  "engines": {
-    "vscode": "^1.75.0"
-  },
-  "categories": [
-    "Programming Languages"
+	"name":"xmljs-rcm-highlight",
+	"displayName":"XML-JS RCM highlighter",
+	"description":"An extension that enables highlighting specifically for RCM development.",
+	"publisher":"Hrachkata",
+  "icon": "images/ai-slop-logo.png",
+	"version":"1.0.0",
+	"engines":{
+		"vscode":"^1.75.0"
+	},
+	"categories":[
+		"Programming Languages"
   ],
-	"license": "I-am-going-going-to-sue-you",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Hrachkata/RCM-highlighter"
+	"license":"I-am-going-to-sue-you",
+	"repository":{
+		"type":"git",
+		"url":"https://github.com/Hrachkata/RCM-highlighter"
 	},
-  "contributes": {
-    "grammars": [
-      {
-        "path": "./syntaxes/rcm.tmLanguage.json",
-        "scopeName": "source.js.injection",
-        "injectTo": [ "text.xml" ],
-        "embeddedLanguages": {
-            "meta.embedded.block.js": "javascript",
-            "meta.embedded.attribute.js": "javascript"
-        }
-      }
-    ],
-	"configuration": {
-		"type": "object",
-		"title": "Example configuration",
-		"properties": {
-			"languageServerExample.maxNumberOfProblems": {
-				"scope": "resource",
-				"type": "number",
-				"default": 100,
-				"description": "Controls the maximum number of problems produced by the server."
+	"contributes":{
+		"grammars":[
+			{
+				"language":"rcm",
+				"scopeName":"source.rcm",
+				"path":"./syntaxes/rcm.tmLanguage.json"
+			},
+			{
+				"path":"./syntaxes/embedded-js.tmLanguage.json",
+				"scopeName":"source.js.injection",
+				"injectTo":[
+					"text.xml",
+					"source.rcm"
+				],
+				"embeddedLanguages":{
+					"meta.embedded.block.js":"javascript",
+					"meta.embedded.attribute.js":"javascript"
+				}
 			}
-		}
+		],
+		"configuration":{
+			"type":"object",
+			"title":"RCM config",
+			"properties":{
+				"languageServerExample.maxNumberOfProblems":{
+					"scope":"resource",
+					"type":"number",
+					"default":100,
+					"description":"Controls the maximum number of problems produced by the server."
+				}
+			}
+		},
+		"languages":[
+			{
+				"id":"rcm",
+				"extensions":[
+					"rcm"
+				],
+				"embeddedLanguages":{
+					"meta.embedded.block.js":"javascript",
+					"meta.embedded.attribute.js":"javascript"
+				},
+				"icon":{
+					"light":"./icons/rcm.svg",
+					"dark":"./icons/rcm.svg"
+				}
+			}
+		]
 	},
-	"languages": [{
-            "id": "xml",
-            "embeddedLanguages": {
-                "meta.embedded.block.js": "javascript",
-                "meta.embedded.attribute.js": "javascript"
-            }
-        }]
-  },
-	"scripts": {
-		"watch": "node client/out/extension.js",
-   	    "postinstall": "cd client && npm install && cd .."
+	"scripts":{
+		"watch":"node client/out/extension.js",
+		"postinstall":"cd client && npm install && cd .."
 	},
-	"keywords": [
+	"keywords":[
 		"multi-root ready"
 	],
-	"activationEvents": [
-		"onLanguage:xml"
+	"activationEvents":[
+		"onLanguage:rcm"
 	],
-	"main": "./client/src/client"
+	"main":"./client/src/client"
 }
