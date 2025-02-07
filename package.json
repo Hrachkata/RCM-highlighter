@@ -2,6 +2,7 @@
   "name": "xmljs-rcm-highlight",
   "displayName": "XML-JS RCM highlighter",
   "description": "An extension that enables highlighting specifically for RCM development.",
+  "publisher": "Hrachkata",
   "version": "1.0.0",
   "engines": {
     "vscode": "^1.75.0"
@@ -9,6 +10,11 @@
   "categories": [
     "Programming Languages"
   ],
+	"license": "I-am-going-going-to-sue-you",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Hrachkata/RCM-highlighter"
+	},
   "contributes": {
     "grammars": [
       {
