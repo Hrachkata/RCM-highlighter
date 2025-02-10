@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-	Copyright © 2006-2019 COZYROC LLC. All rights reserved.
+	Copyright Â© 2006-2019 COZYROC LLC. All rights reserved.
 
 	xsd -c -l:c# -n:CozyRoc.Rest.Configuration xmldsig-core-schema.xsd .\rcm-config-1.0.xsd
 -->
@@ -8,7 +8,6 @@
 	targetNamespace="http://www.cozyroc.com/schema/rcm-config-1.0.xsd"
 	xmlns:config="http://www.cozyroc.com/schema/rcm-config-1.0.xsd"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema"
-	xmlns:dsig="https://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd"
 	elementFormDefault="qualified">
 
 	<xs:import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="xmldsig-core-schema.xsd" />
@@ -31,7 +30,6 @@
 				<xs:element ref="config:Resources" minOccurs="0" />
 				<xs:element ref="config:FileManager" minOccurs="0" />
 				<xs:element ref="config:Script" minOccurs="0" />
-				<!-- <xs:element ref="dsig:Signature" minOccurs="0" maxOccurs="1" /> -->
 			</xs:sequence>
 			<xs:attribute name="Name" type="xs:string" use="required">
 				<xs:annotation>
@@ -134,6 +132,11 @@
 				<xs:documentation>Specifies HTTP request method.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+		<xs:attribute name="CreateOrAlter" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>SOMETHING SOMETHING</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 
 	<xs:complexType name="TestRequest">
@@ -232,9 +235,14 @@
 				<xs:documentation>Set if parameter is enumerable.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="Editor" type="xs:string" use="optional">
+		<xs:attribute name="Editor" type="xs:string">
 			<xs:annotation>
-				<xs:documentation>Editor js.</xs:documentation>
+				<xs:documentation>SOMETHING SOMETHING</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="Value" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>SOMETHING SOMETHING</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>
@@ -253,11 +261,6 @@
 				<xs:attribute name="List" type="xs:string" use="optional">
 					<xs:annotation>
 						<xs:documentation>Specifies list extraction expression. Available template variables: response.</xs:documentation>
-					</xs:annotation>
-				</xs:attribute>
-				<xs:attribute name="CreateOrAlter" type="xs:string" use="optional">
-					<xs:annotation>
-						<xs:documentation>Something something</xs:documentation>
 					</xs:annotation>
 				</xs:attribute>
 			</xs:extension>
@@ -621,20 +624,30 @@
 
 	<xs:complexType name="IteratorNext">
 		<xs:sequence>
-			<xs:element name="Initialization" minOccurs="0">
-				<xs:attribute name="Result" type="xs:string" use="optional">
-					<xs:annotation>
-						<xs:documentation>Something something.</xs:documentation>
-					</xs:annotation>
-				</xs:attribute>
-			</xs:element>
-			<xs:element ref="config:Documentation" minOccurs="0" />
+			<xs:element name="Documentation" type="xs:string" minOccurs="0" />
+            <xs:element name="Initialization" minOccurs="0">
+              <xs:complexType>
+                <xs:attribute name="Result" type="xs:string" use="optional" />
+              </xs:complexType>
+            </xs:element>
 		</xs:sequence>
 		<xs:attribute name="Value" type="xs:string" use="required">
 			<xs:annotation>
 				<xs:documentation>Specifies extraction expression for next iterator. Available template variables: parameters (fields, batchSize, iterator), response.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="IteratorInitialization">
+		<xs:complexContent>
+			<xs:extension base="config:RestRequest">
+				<xs:attribute name="Result" type="xs:string" use="required">
+					<xs:annotation>
+						<xs:documentation>Specifies result extraction expression. Available template variables: response, resource, parameters.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
 	</xs:complexType>
 
 	<xs:element name="Read">
@@ -697,6 +710,11 @@
 						<xs:documentation>Specifies identifier element in result. Available template variables: resource.</xs:documentation>
 					</xs:annotation>
 				</xs:attribute>
+				<xs:attribute name="BodyRequired" type="xs:string" use="optional">
+					<xs:annotation>
+						<xs:documentation>SOMETHING SOMETHING</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -704,13 +722,7 @@
 	<xs:element name="Create">
 		<xs:complexType>
 			<xs:complexContent>
-				<xs:extension base="config:Action">
-					<xs:attribute name="BodyRequired" type="xs:string" use="optional">
-						<xs:annotation>
-							<xs:documentation>something something</xs:documentation>
-						</xs:annotation>
-					</xs:attribute>
-				</xs:extension>
+				<xs:extension base="config:Action" />
 			</xs:complexContent>
 		</xs:complexType>
 	</xs:element>
@@ -718,13 +730,7 @@
 	<xs:element name="Update">
 		<xs:complexType>
 			<xs:complexContent>
-				<xs:extension base="config:Action" >
-					<xs:attribute name="BodyRequired" type="xs:string" use="optional">
-						<xs:annotation>
-							<xs:documentation>something something</xs:documentation>
-						</xs:annotation>
-					</xs:attribute>
-				</xs:extension>
+				<xs:extension base="config:Action" />
 			</xs:complexContent>
 		</xs:complexType>
 	</xs:element>
@@ -732,13 +738,7 @@
 	<xs:element name="Delete">
 		<xs:complexType>
 			<xs:complexContent>
-				<xs:extension base="config:Action" >
-					<xs:attribute name="BodyRequired" type="xs:string" use="optional">
-						<xs:annotation>
-							<xs:documentation>something something</xs:documentation>
-						</xs:annotation>
-					</xs:attribute>
-				</xs:extension>
+				<xs:extension base="config:Action" />
 			</xs:complexContent>
 		</xs:complexType>
 	</xs:element>
@@ -746,13 +746,7 @@
 	<xs:element name="Upsert">
 		<xs:complexType>
 			<xs:complexContent>
-				<xs:extension base="config:Action" >
-					<xs:attribute name="BodyRequired" type="xs:string" use="optional">
-						<xs:annotation>
-							<xs:documentation>something something</xs:documentation>
-						</xs:annotation>
-					</xs:attribute>
-				</xs:extension>
+				<xs:extension base="config:Action" />
 			</xs:complexContent>
 		</xs:complexType>
 	</xs:element>
