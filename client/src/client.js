@@ -49,10 +49,7 @@ function activate(context) {
 	};
 
 	let clientOptions = {
-		documentSelector: [{
-			scheme: 'file',
-			language: 'xml'
-		},
+		documentSelector: [
 		{
 			scheme: 'file',
 			language: 'rcm'
@@ -125,7 +122,6 @@ function activate(context) {
 		wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g
 	});
 
-	const filenameRegex = /[ \w]+(?=[.])/;
 	// Changed active document refresh lint and clear diagnostics
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 	});
@@ -134,7 +130,7 @@ function activate(context) {
 	// Completion Provider
 	// ----------------------------
 	context.subscriptions.push(
-		vscode.languages.registerCompletionItemProvider('xml', {
+		vscode.languages.registerCompletionItemProvider('rcm', {
 			async provideCompletionItems(document, position, token, context) {
 				if (context.triggerCharacter === '.') {
 					return getPropertyAccessCompletions(document, position);

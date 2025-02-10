@@ -48,7 +48,7 @@ async function getJsCompletions(document, position) {
 
         // Map completion ranges back to original document
         completions.items.flatMap(item => {
-                if (!item || item?.kind != 5) {
+                if (!item || !item?.documentation ) {
                     result.items.push({
                         ...item,
                         range: item.range ? mapRangeToOriginal(item.range, block) : undefined
