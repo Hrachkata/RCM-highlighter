@@ -4,6 +4,22 @@ Enables JS highlighting inside XML. For the extension to work your JS has to be 
 
 ![example.png](images/example.png)
 
+Error correction for your XML 
+
+![blabalabla.png](images/example1.png)
+
+Error correction for your JS 
+
+![blablabla.png](images/example2.png)
+
+As well as:
+
+1. Template completions based on declared field names
+2. XML completions of often used elements
+3. Some JS completion
+4. Warnings on the JS to keep your code sueaky clean
+5. Highlighting of JS inside {{= HERE }}
+
 ## Installation for the cool kids
 
 1. Slap an npm install while in the home directory
