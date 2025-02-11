@@ -6,11 +6,11 @@ Enables JS highlighting inside XML. For the extension to work your JS has to be 
 
 Error correction for your XML 
 
-![blabalabla.png](images/example1.png)
+![blabalabla.png](images/example1.PNG)
 
 Error correction for your JS 
 
-![blablabla.png](images/example2.png)
+![blablabla.png](images/example2.PNG)
 
 As well as:
 
