@@ -358,6 +358,11 @@
 					<xs:documentation>Specifies if resource supports Upsert.</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
+			<xs:attribute name="Alter" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>Dynamically alters the resource.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
 		</xs:complexType>
 	</xs:element>
 

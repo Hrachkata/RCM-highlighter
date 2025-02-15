@@ -14,7 +14,7 @@ namespace RcmServer
     {
         private Cache _cache;
 
-        private List<CompletionItem> _completionsCache = new List<CompletionItem>{
+        private List<CompletionItem> _completions = new List<CompletionItem>{
                 new CompletionItem
                 {
                     Label = "Duck",
@@ -57,29 +57,29 @@ namespace RcmServer
                 {
                     Label = "UserParams",
                     Kind = CompletionItemKind.Snippet,
-                    InsertText = @"					<User>
-						<Parameter Name=""$1"">
-							<Documentation>Required. ""$2""</Documentation>
-						</Parameter>
-					</User>$0",
+                    InsertText = @"<User>
+	<Parameter Name=""$1"">
+		<Documentation>Required. ""$2""</Documentation>
+	</Parameter>
+</User>$0",
                     InsertTextFormat = InsertTextFormat.Snippet
                 },
                 new CompletionItem
                 {
                     Label = "UserParam",
                     Kind = CompletionItemKind.Snippet,
-                    InsertText = @"						<Parameter Name=""$1"">
-							<Documentation>Required. ""$2""</Documentation>
-						</Parameter>",
+                    InsertText = @"<Parameter Name=""$1"">
+    <Documentation>Required. ""$2""</Documentation>
+</Parameter>",
                     InsertTextFormat = InsertTextFormat.Snippet
                 },
                 new CompletionItem
                 {
                     Label = "Params",
                     Kind = CompletionItemKind.Snippet,
-                    InsertText = @"					<Parameters>
-						<Parameter Name=""application/json"" Value=""{{=$1}}"" Type=""Body"" />
-                    </Parameters>",
+                    InsertText = @"<Parameters>
+    <Parameter Name=""application/json"" Value=""{{=$1}}"" Type=""Body"" />
+</Parameters>",
                     InsertTextFormat = InsertTextFormat.Snippet
                 },
                 new CompletionItem
@@ -100,30 +100,30 @@ namespace RcmServer
                 {
                     Label = "Value",
                     Kind = CompletionItemKind.Snippet,
-                    InsertText = @"Value""$1""",
+                    InsertText = @"Value=""$1""",
                     InsertTextFormat = InsertTextFormat.Snippet
                 },
                 new CompletionItem
                 {
                     Label = "Type",
                     Kind = CompletionItemKind.Snippet,
-                    InsertText = @"Type""$1""",
+                    InsertText = @"Type=""$1""",
                     InsertTextFormat = InsertTextFormat.Snippet
                 },
                 new CompletionItem
                 {
                     Label = "Default",
                     Kind = CompletionItemKind.Snippet,
-                    InsertText = @"Default""$1""",
+                    InsertText = @"Default=""$1""",
                     InsertTextFormat = InsertTextFormat.Snippet
                 },
                 new CompletionItem
                 {
                     Label = "Iterator",
                     Kind = CompletionItemKind.Snippet,
-                    InsertText = @"					<Iterator>
-						<Next Value=""$1""/>
-					</Iterator>",
+                    InsertText = @"<Iterator>
+    <Next Value=""$1""/>
+</Iterator>",
                     InsertTextFormat = InsertTextFormat.Snippet
                 },
                 new CompletionItem
@@ -191,7 +191,9 @@ namespace RcmServer
 
         public Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken)
         {
-            var items = new List<CompletionItem>(_completionsCache);
+
+
+            var items = new List<CompletionItem>(_completions);
 
             // check if the typed data has a possibility of being in a template attribute
             if (request.Position.Character < 15)
@@ -205,10 +207,22 @@ namespace RcmServer
             // <Component Name="action" Template="ShortText" />
             // matches
             // Template="S
-            var templateLiteralRegex = new Regex(@"(Template.*?=.*?)(.)");
-            var position = templateLiteralRegex.Match(currentLine).Groups[2].Index + 2;
+            var templateLiteralRegex = new Regex(@"(Template.*?=.*?)(.).*(-)");
 
-            if (position != request.Position.Character)
+            
+            var match = templateLiteralRegex.Match(currentLine);
+
+            if (match.Groups.Count != 4)
+            {
+                return Task.FromResult(new CompletionList(items));
+            }
+
+            //var position = templateLiteralRegex.Match(currentLine).Groups[2].Index + 2;
+
+            var positionFirstQuote = templateLiteralRegex.Match(currentLine).Groups[2].Index + 2;
+            var positionSecondQuote = templateLiteralRegex.Match(currentLine).Groups[3].Index + 2;
+
+            if (positionFirstQuote < request.Position.Character && positionSecondQuote > request.Position.Character)
             {
                 return Task.FromResult(new CompletionList(items));
             }

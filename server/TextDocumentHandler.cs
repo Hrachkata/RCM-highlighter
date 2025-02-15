@@ -57,6 +57,7 @@ namespace RcmServer
                     _validationSettings.Schemas.Add(schema);
                     _validationSettings.ValidationEventHandler += new ValidationEventHandler(ValidationCallBack);
                     _validationSettings.IgnoreComments = true;
+                    _validationSettings.Async = true;
                 }
 
                 return _validationSettings;
@@ -108,7 +109,7 @@ namespace RcmServer
                 changedEvent = item;
             }
 
-            var diagnosticArr = ValidateBySchema(changedEvent.Text, notification.TextDocument.Uri);
+            var diagnosticArr = await ValidateBySchema(changedEvent.Text, notification.TextDocument.Uri);
 
             _languageServer.TextDocument.PublishDiagnostics(diagnosticArr);
 
@@ -121,7 +122,7 @@ namespace RcmServer
         {
             await Task.Yield();
 
-            var diagnosticArr = ValidateBySchema(notification.TextDocument.Text, notification.TextDocument.Uri);
+            var diagnosticArr = await ValidateBySchema(notification.TextDocument.Text, notification.TextDocument.Uri);
 
             _languageServer.TextDocument.PublishDiagnostics(diagnosticArr);
 
@@ -164,6 +165,7 @@ namespace RcmServer
                         bool insideTargetParent = false;
                         string targetParent = "Template";
                         string targetAttribute = "Name";
+
                         try
                         {
                             while (await XMLdocReader.ReadAsync())
@@ -258,17 +260,15 @@ namespace RcmServer
             }
         }
 
-        private PublishDiagnosticsParams ValidateBySchema(string documentContent, DocumentUri documentUri)
+        private async Task<PublishDiagnosticsParams> ValidateBySchema(string documentContent, DocumentUri documentUri)
         {
-            XmlReader reader;
-
             try
             {
                 using (StringReader stringReader = new StringReader(documentContent))
                 using (XmlReader validator = XmlReader.Create(stringReader, validationSettings))
                 {
                     // Validate the entire xml file
-                    while (validator.Read()) ;
+                    while (await validator.ReadAsync()) {};
                 }
             }
             catch (XmlException e)
@@ -287,6 +287,10 @@ namespace RcmServer
                 };
 
                 diagnostics.Add(currentDiagItem);
+            }
+            catch (Exception er)
+            {
+                Console.WriteLine(er);
             }
 
             var publishDiagnosticsParams = new PublishDiagnosticsParams
