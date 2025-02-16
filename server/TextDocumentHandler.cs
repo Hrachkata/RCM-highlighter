@@ -268,7 +268,12 @@ namespace RcmServer
                 using (XmlReader validator = XmlReader.Create(stringReader, validationSettings))
                 {
                     // Validate the entire xml file
-                    while (await validator.ReadAsync()) {};
+                    while (await validator.ReadAsync()) {
+                        if (validator.NodeType == XmlNodeType.Element && validator.Name == "Script")
+                        {
+                            cache.ScriptLine = (validator is IXmlLineInfo xmlLine && xmlLine.HasLineInfo()) ? xmlLine.LineNumber : -1;
+                        }
+                    };
                 }
             }
             catch (XmlException e)

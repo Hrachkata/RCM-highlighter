@@ -191,7 +191,11 @@ namespace RcmServer
 
         public Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken)
         {
-
+            if (request.Position.Line > _cache.ScriptLine)
+            {
+                // Script territory no need to provide autocompletes
+                return Task.FromResult(new CompletionList(true));
+            }
 
             var items = new List<CompletionItem>(_completions);
 
@@ -204,6 +208,7 @@ namespace RcmServer
             var uri = request.TextDocument.Uri.Path;
             var currentLine = ReadCurrentLine(uri.Substring(1, uri.Length - 1), request.Position.Line + 1);
             currentLine = currentLine.Replace("\"", "-");
+
             // <Component Name="action" Template="ShortText" />
             // matches
             // Template="S

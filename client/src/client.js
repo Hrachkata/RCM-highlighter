@@ -122,10 +122,6 @@ function activate(context) {
 		wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g
 	});
 
-	// Changed active document refresh lint and clear diagnostics
-	vscode.window.onDidChangeActiveTextEditor(editor => {
-	});
-
 	// ----------------------------
 	// Completion Provider
 	// ----------------------------

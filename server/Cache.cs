@@ -6,6 +6,8 @@ namespace RcmServer
     // Can be fixed, shit code repetition, fast af doe
     public class Cache
     {
+        public int ScriptLine { get; set; }
+
         private volatile HashSet<string> _templateFieldCache = new();
         private volatile HashSet<string> _templateResourceCache = new();
 
