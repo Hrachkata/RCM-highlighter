@@ -181,6 +181,13 @@ namespace RcmServer
                     Kind = CompletionItemKind.Snippet,
                     InsertText = @"Template=""$1""",
                     InsertTextFormat = InsertTextFormat.Snippet
+                },
+                new CompletionItem
+                {
+                    Label = "Enumerable",
+                    Kind = CompletionItemKind.Snippet,
+                    InsertText = @"Enumerable=""true""",
+                    InsertTextFormat = InsertTextFormat.Snippet
                 }
             };
 
@@ -209,20 +216,14 @@ namespace RcmServer
             var currentLine = ReadCurrentLine(uri.Substring(1, uri.Length - 1), request.Position.Line + 1);
             currentLine = currentLine.Replace("\"", "-");
 
-            // <Component Name="action" Template="ShortText" />
-            // matches
-            // Template="S
             var templateLiteralRegex = new Regex(@"(Template.*?=.*?)(.).*(-)");
 
-            
             var match = templateLiteralRegex.Match(currentLine);
 
             if (match.Groups.Count != 4)
             {
                 return Task.FromResult(new CompletionList(items));
             }
-
-            //var position = templateLiteralRegex.Match(currentLine).Groups[2].Index + 2;
 
             var positionFirstQuote = templateLiteralRegex.Match(currentLine).Groups[2].Index + 2;
             var positionSecondQuote = templateLiteralRegex.Match(currentLine).Groups[3].Index + 2;
@@ -274,20 +275,21 @@ namespace RcmServer
 
         static string ReadCurrentLine(string filePath, int lineNumber)
         {
-            using (StreamReader reader = new StreamReader(filePath))
+            using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) { 
+            using (StreamReader reader = new StreamReader(stream))
             {
                 for (int i = 1; i <= lineNumber; i++)
                 {
-                    string line = reader.ReadLine();
+                    var line = reader.ReadLine();
 
                     if (line == null)
-                        return null; 
+                        return null;
 
                     if (i == lineNumber)
                         return line;
                 }
             }
-
+            }
             return null;
         }
     }

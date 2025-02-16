@@ -135,7 +135,7 @@ function activate(context) {
 				let completions = getJsCompletions(document, position, virtualProvider);
 				return completions;
 			}
-		}, '=', '.') // Trigger characters
+		}, '=', '.', '(', ':', '[') // Trigger characters
 	);
 
 	client.start();
