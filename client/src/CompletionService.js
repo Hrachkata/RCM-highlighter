@@ -17,16 +17,16 @@ async function getCachedVirtualUri(virtualUri, block){
     }
 }
 
+const jsWordPattern = /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g;
+
 async function getJsCompletions(document, position) {
     const block = findJsBlockAtPosition(document, position);
     if (!block) return [];
 
-    // Create isolated virtual document for this block
     const virtualUri = vscode.Uri.parse(
         `js-in-xml://${document.uri.path}/block_${block.startLine}.js`
     );
     
-    // Calculate precise virtual position
     const virtualPosition = new vscode.Position(
         position.line - block.startLine,
         position.character - (position.line === block.startLine ? block.startCol : 0)
@@ -35,26 +35,25 @@ async function getJsCompletions(document, position) {
     const cached = getCachedVirtualUri(virtualUri, block);
 
     try {
-        // Get raw completions from VS Code's JS engine
-        let completions = await vscode.commands.executeCommand(
-            'vscode.executeCompletionItemProvider',
-            virtualUri,
-            virtualPosition,
-            undefined,
-            20
-        );
+        // Get all regex matches
+        const completions = [...block.code.matchAll(jsWordPattern)];
+        
+        // Extract words, filter by length, and deduplicate
+        const words = completions.map(match => match[0])
+                                 .filter(word => word && word.length > 2);
+        const uniqueWords = [...new Set(words)]; // Using Set for uniqueness
 
-        let result = new vscode.CompletionList();
+        const result = new vscode.CompletionList();
 
-        // Map completion ranges back to original document
-        completions.items.flatMap(item => {
-                if (!item || !item?.documentation ) {
-                    result.items.push({
-                        ...item,
-                        range: item.range ? mapRangeToOriginal(item.range, block) : undefined
-                    });
-                };
+        // Add each unique word to completions
+        uniqueWords.forEach(word => {
+            result.items.push({
+                label: word,
+                // Note: Original range handling was incorrect (match doesn't include ranges)
+                // Consider calculating range based on match index if needed
+                range: undefined 
             });
+        });
 
         completionCache = result;
         return result;

@@ -85,7 +85,8 @@ namespace RcmServer
                         )
             ).ConfigureAwait(false);
 
-            var documentHandler = new TextDocumentHandler(server, Log.Logger, server.Configuration, server.GetService<SchemaManager>(), cacheService);
+            var handlerUtils = new TextDocumentUtils(cacheService);
+            var documentHandler = new TextDocumentHandler(server, Log.Logger, handlerUtils, server.Configuration);
             server.Register(registry => { registry.AddHandler(documentHandler); });
 
             await server.WaitForExit.ConfigureAwait(false);
