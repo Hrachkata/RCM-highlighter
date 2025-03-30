@@ -61,6 +61,12 @@
 				"icon":{
 					"light":"./icons/rcm.svg",
 					"dark":"./icons/rcm.svg"
+				},
+    			"configuration": "./syntaxes/rcm.tmLanguage.json",
+				"configurationDefaults": {
+				  "[rcm]": {
+					"editor.defaultFormatter": "your-extension-id"
+				  }
 				}
 			}
 		]

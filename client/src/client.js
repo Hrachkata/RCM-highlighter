@@ -138,6 +138,16 @@ function activate(context) {
 		}, '=', '.', '(', ':', '[') // Trigger characters
 	);
 
+	vscode.languages.registerDocumentFormattingEditProvider('rcm', {
+		async provideDocumentFormattingEdits(document) {
+			const edits = await vscode.commands.executeCommand<vscode.TextEdit>(
+				'vscode.executeFormatDocumentProvider',
+				document.uri
+			);
+			return edits;
+		}
+	});
+
 	client.start();
 }
 
