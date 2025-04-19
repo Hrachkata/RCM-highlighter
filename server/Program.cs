@@ -47,6 +47,7 @@ namespace RcmServer
                             .SetMinimumLevel(LogLevel.Debug)
                 )
                         .WithHandler<CompletionHandler>()
+                        .WithHandler<FormattingHandler>()
                         //.WithHandler<DidChangeWatchedFilesHandler>()
                         //.WithHandler<FoldingRangeHandler>()
                         //.WithHandler<MyWorkspaceSymbolsHandler>()

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace RcmServer
@@ -10,6 +11,40 @@ namespace RcmServer
 
         private volatile HashSet<string> _templateFieldCache = new();
         private volatile HashSet<string> _templateResourceCache = new();
+
+        private string _docText = string.Empty;
+        private string[] _lines = Array.Empty<string>();
+        private readonly object _syncRoot = new();
+
+        public void UpdateDocument(string newText)
+        {
+            lock (_syncRoot)
+            {
+                if (_docText != newText)
+                {
+                    _docText = newText;
+                    // split
+                    _lines = SplitLines(_docText);
+                }
+            }
+        }
+
+        public string GetLine(int lineNumber)
+        {
+            lock (_syncRoot)
+            {
+                return (lineNumber >= 0 && lineNumber < _lines.Length)
+                    ? _lines[lineNumber]
+                    : string.Empty;
+            }
+        }
+
+        private static string[] SplitLines(string text)
+        {
+            // Might experience catastrophic breakage
+            // Half TODO maybe fix this idk
+            return text.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+        }
 
         public void UpdateTemplateFieldCache(HashSet<string> templateNames)
         {

@@ -59,8 +59,6 @@ namespace RcmServer
         {
             await Task.Yield();
 
-            _logger.Information("Changed text document.");
-
             TextDocumentContentChangeEvent changedEvent = null;
 
             foreach (TextDocumentContentChangeEvent? item in notification.ContentChanges)
@@ -86,8 +84,6 @@ namespace RcmServer
             var diagnosticArr = await utils.ValidateBySchemaAsync(notification.TextDocument.Text, notification.TextDocument.Uri);
 
             _languageServer.TextDocument.PublishDiagnostics(diagnosticArr);
-
-            _logger.Information("Opened document.");
 
             return Unit.Value;
         }

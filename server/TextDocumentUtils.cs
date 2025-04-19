@@ -96,10 +96,15 @@ namespace RcmServer
 
         public async Task<PublishDiagnosticsParams> ValidateBySchemaAsync(string documentContent, DocumentUri documentUri)
         {
+            cache.UpdateDocument(documentContent);
+
             var resourceNames = new HashSet<string>();
             var fieldNames = new HashSet<string>();
 
             cache.ScriptLine = int.MaxValue;
+
+            cache.ClearTemplateFieldCache();
+            cache.ClearTemplateResourceCache();
 
             try
             {
@@ -109,6 +114,7 @@ namespace RcmServer
                     // Validate the entire xml file
                     while (await XMLdocReader.ReadAsync())
                     {
+                        // Get the script position, we do not want autocompletes inside the JS
                         if (XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.Name == "Script")
                         {
                             cache.ScriptLine = (XMLdocReader is IXmlLineInfo xmlLine && xmlLine.HasLineInfo()) ? xmlLine.LineNumber : -1;
@@ -161,11 +167,6 @@ namespace RcmServer
             }
             catch (XmlException e)
             {
-                cache.ClearTemplateFieldCache();
-                cache.ClearTemplateResourceCache();
-                cache.UpdateTemplateFieldCache(fieldNames);
-                cache.UpdateTemplateResourceCache(resourceNames);
-
                 var range = new Range(
                     new Position(e.LineNumber - 1, e.LinePosition - 1),
                     new Position(e.LineNumber - 1, e.LinePosition + 999));
@@ -178,12 +179,18 @@ namespace RcmServer
                     Source = "RCM-NET-server",
                     Range = range
                 };
-
+                // Log something?
                 diagnostics.Add(currentDiagItem);
             }
             catch (Exception er)
             {
+                // Log something?
                 Console.WriteLine(er);
+            }
+            finally
+            {
+                cache.UpdateTemplateFieldCache(fieldNames);
+                cache.UpdateTemplateResourceCache(resourceNames);
             }
 
             var publishDiagnosticsParams = new PublishDiagnosticsParams
@@ -191,11 +198,6 @@ namespace RcmServer
                 Uri = documentUri,
                 Diagnostics = diagnostics
             };
-
-            cache.ClearTemplateFieldCache();
-            cache.ClearTemplateResourceCache();
-            cache.UpdateTemplateFieldCache(fieldNames);
-            cache.UpdateTemplateResourceCache(resourceNames);
 
             return publishDiagnosticsParams;
         }

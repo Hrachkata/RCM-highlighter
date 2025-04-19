@@ -81,7 +81,7 @@ function activate(context) {
 			// Check if inside quotes (attribute value)
 			const isInsideQuotes = /=\s*["'][^"']*$/.test(textBeforeCursor);
 			if (isInsideQuotes) {
-				vscode.commands.executeCommand('editor.action.triggerSuggest');
+				vscode.commands.executeCommand('editor.action.triggerSuggest',  { auto: true });
 			}
 		}, 300); // Small delay to ensure cursor position is updated
 	});

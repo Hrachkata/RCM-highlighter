@@ -35,8 +35,8 @@ namespace RcmServer
                 return Task.FromResult(new CompletionList(items));
             }
 
-            var uri = request.TextDocument.Uri.Path;
-            var currentLine = ReadCurrentLine(uri.Substring(1, uri.Length - 1), request.Position.Line + 1);
+            var currentLine = _cache.GetLine(request.Position.Line);
+
             currentLine = currentLine.Replace("\"", "-");
 
             var templateLiteralRegex = new Regex(@"(Template.*?=.*?)(.).*(-)");
