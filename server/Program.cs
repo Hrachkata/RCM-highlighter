@@ -24,14 +24,6 @@ namespace RcmServer
 
         private static async Task MainAsync(string[] args)
         {
-            // Useless, remove later, logging is for nerds
-            Log.Logger = new LoggerConfiguration()
-                        .Enrich.FromLogContext()
-                        .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day)
-                        .MinimumLevel.Verbose()
-                        .CreateLogger();
-            Log.Logger.Information("The server starts at least.");
-
             var cacheService = new Cache();
 
             IObserver<WorkDoneProgressReport> workDone = null!;
@@ -58,13 +50,6 @@ namespace RcmServer
                             services =>
                             {
                                 services.AddSingleton(
-                                    schemaManger =>
-                                    {
-                                        var schemaManager = new SchemaManager();
-                                        schemaManager.GetSchemaAsync("https://www.cozyroc.com/sites/default/files/down/schema/rcm-config-1.0.xsd").Wait();
-                                        return schemaManager;
-                                    }
-                                ).AddSingleton(
                                     cache =>
                                     {
                                         return cacheService;
@@ -87,26 +72,10 @@ namespace RcmServer
             ).ConfigureAwait(false);
 
             var handlerUtils = new TextDocumentUtils(cacheService);
-            var documentHandler = new TextDocumentHandler(server, Log.Logger, handlerUtils, server.Configuration);
+            var documentHandler = new TextDocumentHandler(server, handlerUtils, server.Configuration);
             server.Register(registry => { registry.AddHandler(documentHandler); });
 
             await server.WaitForExit.ConfigureAwait(false);
-        }
-    }
-
-    public class Foo
-    {
-        private readonly Serilog.ILogger _logger;
-
-        public Foo(Serilog.ILogger logger)
-        {
-            logger.Information("inside ctor of Foo");
-            _logger = logger;
-        }
-
-        public void SayFoo()
-        {
-            _logger.Information("Fooooo!");
         }
     }
 }

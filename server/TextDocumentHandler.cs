@@ -26,9 +26,7 @@ namespace RcmServer
 {
     public class TextDocumentHandler : TextDocumentSyncHandlerBase
     {
-        private readonly Serilog.ILogger _logger;
         private readonly ILanguageServer _languageServer;
-        // private readonly SchemaManager _schemaManager;
         private TextDocumentUtils utils;
         private readonly ILanguageServerConfiguration _configuration;
         private readonly TextDocumentSelector _textDocumentSelector = new TextDocumentSelector(
@@ -38,15 +36,11 @@ namespace RcmServer
             }
         );
 
-        public TextDocumentHandler( ILanguageServer languageServer, Serilog.ILogger logger, TextDocumentUtils TextDocumentUtils, ILanguageServerConfiguration configuration)
+        public TextDocumentHandler( ILanguageServer languageServer, TextDocumentUtils TextDocumentUtils, ILanguageServerConfiguration configuration)
         {
             _languageServer = languageServer;
-            _logger = logger;
             utils = TextDocumentUtils;
             _configuration = configuration;
-            // Invalid for now
-            //_schemaManager = schemaManager;
-            //var schema = await _schemaManager.GetSchemaAsync("https://www.cozyroc.com/sites/default/files/down/schema/rcm-config-1.0.xsd");
         }
 
 
@@ -122,62 +116,62 @@ namespace RcmServer
 
 
 
-        internal class MyDocumentSymbolHandler : IDocumentSymbolHandler
-        {
-            public async Task<SymbolInformationOrDocumentSymbolContainer> Handle(
-                DocumentSymbolParams request,
-                CancellationToken cancellationToken
-            )
-            {
-                // you would normally get this from a common source that is managed by current open editor, current active editor, etc.
-                var content = await File.ReadAllTextAsync(DocumentUri.GetFileSystemPath(request), cancellationToken).ConfigureAwait(false);
-                var lines = content.Split('\n');
-                var symbols = new List<SymbolInformationOrDocumentSymbol>();
-                for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
-                {
-                    var line = lines[lineIndex];
-                    var parts = line.Split(' ', '.', '(', ')', '{', '}', '[', ']', ';');
-                    var currentCharacter = 0;
-                    foreach (var part in parts)
-                    {
-                        if (string.IsNullOrWhiteSpace(part))
-                        {
-                            currentCharacter += part.Length + 1;
-                            continue;
-                        }
+        //internal class MyDocumentSymbolHandler : IDocumentSymbolHandler
+        //{
+        //    public async Task<SymbolInformationOrDocumentSymbolContainer> Handle(
+        //        DocumentSymbolParams request,
+        //        CancellationToken cancellationToken
+        //    )
+        //    {
+        //        // you would normally get this from a common source that is managed by current open editor, current active editor, etc.
+        //        var content = await File.ReadAllTextAsync(DocumentUri.GetFileSystemPath(request), cancellationToken).ConfigureAwait(false);
+        //        var lines = content.Split('\n');
+        //        var symbols = new List<SymbolInformationOrDocumentSymbol>();
+        //        for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
+        //        {
+        //            var line = lines[lineIndex];
+        //            var parts = line.Split(' ', '.', '(', ')', '{', '}', '[', ']', ';');
+        //            var currentCharacter = 0;
+        //            foreach (var part in parts)
+        //            {
+        //                if (string.IsNullOrWhiteSpace(part))
+        //                {
+        //                    currentCharacter += part.Length + 1;
+        //                    continue;
+        //                }
 
-                        symbols.Add(
-                            new DocumentSymbol
-                            {
-                                Detail = part,
-                                Deprecated = true,
-                                Kind = SymbolKind.Field,
-                                Tags = new[] { SymbolTag.Deprecated },
-                                Range = new Range(
-                                    new Position(lineIndex, currentCharacter),
-                                    new Position(lineIndex, currentCharacter + part.Length)
-                                ),
-                                SelectionRange =
-                                    new Range(
-                                        new Position(lineIndex, currentCharacter),
-                                        new Position(lineIndex, currentCharacter + part.Length)
-                                    ),
-                                Name = part
-                            }
-                        );
-                        currentCharacter += part.Length + 1;
-                    }
-                }
+        //                symbols.Add(
+        //                    new DocumentSymbol
+        //                    {
+        //                        Detail = part,
+        //                        Deprecated = true,
+        //                        Kind = SymbolKind.Field,
+        //                        Tags = new[] { SymbolTag.Deprecated },
+        //                        Range = new Range(
+        //                            new Position(lineIndex, currentCharacter),
+        //                            new Position(lineIndex, currentCharacter + part.Length)
+        //                        ),
+        //                        SelectionRange =
+        //                            new Range(
+        //                                new Position(lineIndex, currentCharacter),
+        //                                new Position(lineIndex, currentCharacter + part.Length)
+        //                            ),
+        //                        Name = part
+        //                    }
+        //                );
+        //                currentCharacter += part.Length + 1;
+        //            }
+        //        }
 
-                await Task.Delay(2000, cancellationToken);
-                return symbols;
-            }
+        //        await Task.Delay(2000, cancellationToken);
+        //        return symbols;
+        //    }
 
-            public DocumentSymbolRegistrationOptions GetRegistrationOptions(DocumentSymbolCapability capability, ClientCapabilities clientCapabilities) => new DocumentSymbolRegistrationOptions
-            {
-                DocumentSelector = TextDocumentSelector.ForLanguage("csharp")
-            };
-        }
+        //    public DocumentSymbolRegistrationOptions GetRegistrationOptions(DocumentSymbolCapability capability, ClientCapabilities clientCapabilities) => new DocumentSymbolRegistrationOptions
+        //    {
+        //        DocumentSelector = TextDocumentSelector.ForLanguage("csharp")
+        //    };
+        //}
 
         /*internal class MyWorkspaceSymbolsHandler : IWorkspaceSymbolsHandler
         {

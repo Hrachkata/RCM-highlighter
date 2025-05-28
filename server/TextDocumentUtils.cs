@@ -108,6 +108,8 @@ namespace RcmServer
 
             try
             {
+                bool doneWithTemplates = false;
+
                 using (StringReader stringReader = new StringReader(documentContent))
                 using (XmlReader XMLdocReader = XmlReader.Create(stringReader, validationSettings))
                 {
@@ -120,47 +122,49 @@ namespace RcmServer
                             cache.ScriptLine = (XMLdocReader is IXmlLineInfo xmlLine && xmlLine.HasLineInfo()) ? xmlLine.LineNumber : -1;
                         }
 
-                        if (XMLdocReader.NodeType == XmlNodeType.Element)
+                        if (XMLdocReader.NodeType == XmlNodeType.Element && !doneWithTemplates )
                         {
                             bool insideTargetParent = false;
                             string targetParent = "Template";
                             string targetAttribute = "Name";
 
-                                while (await XMLdocReader.ReadAsync())
+                            while (await XMLdocReader.ReadAsync())
+                            {
+                                if (XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.Name == targetParent)
                                 {
-                                    if (XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.Name == targetParent)
+                                    insideTargetParent = true;
+                                }
+                                else if (XMLdocReader.NodeType == XmlNodeType.EndElement && XMLdocReader.Name == targetParent)
+                                {
+                                    // When all templates have been cached flag it
+                                    doneWithTemplates = true;
+                                    break;
+                                }
+
+                                if (insideTargetParent && XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.HasAttributes)
+                                {
+                                    string elementName = XMLdocReader.Name;
+
+                                    string? attributeValue = XMLdocReader.GetAttribute(targetAttribute);
+
+                                    if (attributeValue == null)
                                     {
-                                        insideTargetParent = true;
+                                        continue;
                                     }
-                                    else if (XMLdocReader.NodeType == XmlNodeType.EndElement && XMLdocReader.Name == targetParent)
+
+                                    switch (elementName)
                                     {
-                                        break;
-                                    }
-
-                                    if (insideTargetParent && XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.HasAttributes)
-                                    {
-                                        string elementName = XMLdocReader.Name;
-
-                                        string? attributeValue = XMLdocReader.GetAttribute(targetAttribute);
-
-                                        if (attributeValue == null)
-                                        {
-                                            continue;
-                                        }
-
-                                        switch (elementName)
-                                        {
-                                            case "Resource":
-                                                resourceNames.Add(attributeValue);
-                                                break;
-                                            case "Field":
-                                                fieldNames.Add(attributeValue);
-                                                break;
-                                            default:
-                                                break;
-                                        }
+                                        case "Resource":
+                                            resourceNames.Add(attributeValue);
+                                            break;
+                                        case "Field":
+                                            fieldNames.Add(attributeValue);
+                                            break;
+                                        default:
+                                            break;
                                     }
                                 }
+                            }
                         }
                     };
                 }

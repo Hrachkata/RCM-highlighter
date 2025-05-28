@@ -29,12 +29,6 @@ namespace RcmServer
 
             var items = new List<CompletionItem>(VibeHelper.Completions);
 
-            // check if the typed data has a possibility of being in a template attribute
-            if (request.Position.Character < 15)
-            {
-                return Task.FromResult(new CompletionList(items));
-            }
-
             var currentLine = _cache.GetLine(request.Position.Line);
 
             currentLine = currentLine.Replace("\"", "-");
@@ -94,26 +88,6 @@ namespace RcmServer
             }
 
             return Task.FromResult(new CompletionList(items));
-        }
-
-        static string ReadCurrentLine(string filePath, int lineNumber)
-        {
-            using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) { 
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                for (int i = 1; i <= lineNumber; i++)
-                {
-                    var line = reader.ReadLine();
-
-                    if (line == null)
-                        return null;
-
-                    if (i == lineNumber)
-                        return line;
-                }
-            }
-            }
-            return null;
         }
     }
 }
