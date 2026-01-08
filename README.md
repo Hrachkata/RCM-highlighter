@@ -20,7 +20,7 @@ As well as:
 4. Warnings on the JS to keep your code sueaky clean
 5. Highlighting of JS inside {{= HERE }}
 
-## Installation for the cool kids
+## Installation
 
 1. Slap an npm install while in the home directory
 2. Build the C# project located in the server directory
@@ -29,10 +29,10 @@ As well as:
 5. There should be JS highlighting and XML suggestions
 6. If there isn't, good luck ¯\\_(ツ)\_/¯
 
-## Installation for the cool kids that are lazy
+## Installation 2.0
 
 1. Install the VSIX
-2. If your computer still works, great job
+2. If your VS Code still works, great job
 
 ## Debugging
 
