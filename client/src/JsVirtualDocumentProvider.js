@@ -1,47 +1,28 @@
 const vscode = require('vscode');
 
+// Doesn't work well for autocompletion
+
 class JsVirtualDocumentProvider {
-    constructor() {
-        this._onDidChange = new vscode.EventEmitter();
-        this.documents = new Map();
-        this.lastAccessed = new Map(); // Track last access time
-    }
+	provideTextDocumentContent(uri) {
+		const params = new URLSearchParams(uri.query);
+		const docUri = vscode.Uri.parse(params.get('doc'));
+		const jsBlockOffsetStart = Number(params.get('jsBlockOffsetStart'));
+		const jsBlockOffsetEnd = Number(params.get('jsBlockOffsetEnd'));
 
-    provideTextDocumentContent(uri) {
-        const uriString = uri.toString();
-        if (this.documents.has(uriString)) {
-            this.lastAccessed.set(uriString, Date.now());
-            return this.documents.get(uriString);
-        }
-        return '';
-    }
+		const xmlDoc = vscode.workspace.textDocuments.find(
+			d => d.uri.toString() === docUri.toString()
+		);
 
-    updateDocument(uri, content) {
-        const uriString = uri.toString();
-        this.documents.set(uri.toString(), content);
-        this.lastAccessed.set(uriString, Date.now());
-        this._onDidChange.fire(uri);
-    }
+		if (!xmlDoc) return '}';
 
-    purgeInactive(activeVirtualUris, maxAgeMinutes = 15) {
-        const now = Date.now();
-        const maxAge = maxAgeMinutes * 60 * 1000;
-        
-        for (const [uriString] of this.documents) {
-            const lastAccess = this.lastAccessed.get(uriString) || 0;
-            const isActive = activeVirtualUris.has(uriString);
-            const isExpired = (now - lastAccess) > maxAge;
+		const jsBlock = xmlDoc.getText().slice(jsBlockOffsetStart, jsBlockOffsetEnd);
 
-            if (!isActive && isExpired) {
-                this.documents.delete(uriString);
-                this.lastAccessed.delete(uriString);
-            }
-        }
-    }
+		if (!jsBlock) return '}';
 
-    get onDidChange() {
-        return this._onDidChange.event;
-    }
+    	return jsBlock;
+	}
 }
 
-module.exports = { JsVirtualDocumentProvider };
+module.exports = {
+	JsVirtualDocumentProvider
+};

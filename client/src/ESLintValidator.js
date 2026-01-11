@@ -1,23 +1,13 @@
 const vscode = require('vscode');
-const {
-	ESLint
-} = require('eslint');
+const { ESLint } = require('eslint');
 
 const dontValidate = ['require', 'getClrType', '_', 's', 'connection', 'user', 'token', 'UI', 'Uri', 'Base64', 'OAuth2', 'alert', 'doT', 'RestConnection', 
 					'utils', 'OAuth1', 'b64_hmac_sha1', 'json2xml', 'aws4s', 'SOAP', 'b64_hmac_sha256', 'dateFormat', 'hex_hmac_sha256', 'hex_hmac_sha1',
 					'Google', 'xml2json']
 const diagnosticSource = 'ESLint-integrated-srv'
 
-const filenameRegex = /[ \w]+(?=[.])/;
-let fileName = filenameRegex.exec(vscode.window.activeTextEditor.document.fileName)[0];
-dontValidate.push(fileName);
-
-// Initialize ESLint
 eslintInstance = new ESLint(getESLintConfig());
 
-// ----------------------------
-// 5. Diagnostic Utilities
-// ----------------------------
 async function updateDiagnostics(document, collection) {
 	const block = findJsBlocks(document.getText());
 
@@ -62,9 +52,7 @@ const jsCodePatterndirty =  /<!\[CDATA\[(\s)*?([\s\S]*)\]\]>/gd;
 const elementsInsideDirtyCodePattern = /]]>[\s\S]*?<!\[CDATA\[.*\n?/gd;
 const newlineRegex =  /\n/g
 const newline =  '\n';
-// ----------------------------
-// 7. Block Detection Utilities
-// ----------------------------
+
 function findJsBlocks(content) {
 	let JSdirty = jsCodePatterndirty.exec(content);
 	if (!JSdirty) {

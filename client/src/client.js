@@ -12,8 +12,7 @@ const {
 } = require('./ESLintValidator');
 
 const {
-	getJsCompletions,
-	getPropertyAccessCompletions
+	getJsCompletions
 } = require('./CompletionService');
 
 const {
@@ -24,8 +23,9 @@ const {
 const languageServerPathDebug = "server/bin/Debug/net5.0/RcmServer.dll";
 const languageServerPathRelease = "server/bin/Release/net5.0/RcmServer.dll";
 const languageServerDll = "RcmServer.dll";
+const jsScheme = 'js-in-xml';
 
-virtualProvider = new JsVirtualDocumentProvider();
+//virtualProvider = new JsVirtualDocumentProvider();
 
 function activate(context) {
 	let workPathDebug = path.dirname(context.asAbsolutePath(languageServerPathDebug));
@@ -59,10 +59,9 @@ function activate(context) {
 		}
 	};
 
-	// ----------------------------
-	// Completion handler for templates hack, but to .NET srv
-	// ----------------------------
 	let triggerTimeout;
+
+	// Completion handler for templates hack
 	vscode.workspace.onDidChangeTextDocument((event) => {
 		const activeEditor = vscode.window.activeTextEditor;
 		if (!activeEditor || event.document !== activeEditor.document) return;
@@ -87,7 +86,7 @@ function activate(context) {
 	});
 
 	let client = new LanguageClient(
-		'xmljs-rcm-highlight', // Unique id for your client
+		'xmljs-rcm-highlight',
 		'XML JS RCM Language Client',
 		serverOptions,
 		clientOptions
@@ -96,84 +95,55 @@ function activate(context) {
 	context.subscriptions.push(client);
 
 
-	// Setup virtual document provider
-	context.subscriptions.push(
-		vscode.workspace.registerTextDocumentContentProvider('js-in-xml', virtualProvider)
-	);
-
-	// ----------------------------
 	// Diagnostics (Error Checking)
-	// ----------------------------
-	const diagnostics = vscode.languages.createDiagnosticCollection('js-in-xml');
+	const diagnostics = vscode.languages.createDiagnosticCollection(jsScheme);
 	context.subscriptions.push(diagnostics);
 
 	// OnChange sent to ESLint
 	let lintTimeout;
-	vscode.workspace.onDidChangeTextDocument(e => {
+	context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => {
 		clearTimeout(lintTimeout);
-		lintTimeout = setTimeout(() => updateDiagnostics(e.document, diagnostics), 1000);
-	});
+		lintTimeout = setTimeout(() => updateDiagnostics(e.document, diagnostics), 500);
+	}));
 
-	vscode.workspace.onDidOpenTextDocument(doc => {
-		setTimeout(() => updateDiagnostics(doc, diagnostics), 1000);
-	});
-	
-	vscode.languages.setLanguageConfiguration('javascript', {
-		wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g
-	});
+	context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(doc => {
+		setTimeout(() => updateDiagnostics(doc, diagnostics), 500);
+	}));
 
-	// ----------------------------
-	// Completion Provider
-	// ----------------------------
+	// Completion Provider JS
 	context.subscriptions.push(
-		vscode.languages.registerCompletionItemProvider('rcm', {
-			async provideCompletionItems(document, position, token, context) {
-				if (context.triggerCharacter === '.') {
-					return getPropertyAccessCompletions(document, position);
+		vscode.languages.registerCompletionItemProvider(
+			'rcm', 
+			{
+				async provideCompletionItems(document, position) {
+					let completions = await getJsCompletions(document, position);
+					
+					if (completions) {
+						return completions;
+					}
 				}
-				
-				let completions = getJsCompletions(document, position, virtualProvider);
-				return completions;
-			}
-		}, '=', '.', '(', ':', '[') // Trigger characters
+			},
+  			'.'
+		)
 	);
 
-	vscode.languages.registerDocumentFormattingEditProvider('rcm', {
-		async provideDocumentFormattingEdits(document) {
-			const edits = await vscode.commands.executeCommand<vscode.TextEdit>(
-				'vscode.executeFormatDocumentProvider',
-				document.uri
-			);
-			return edits;
-		}
-	});
+	// TODO: XML Formatter, low priority
+	// vscode.languages.registerDocumentFormattingEditProvider('rcm', {
+	// 	async provideDocumentFormattingEdits(document) {
+	// 		const edits = await vscode.commands.executeCommand<vscode.TextEdit>(
+	// 			'vscode.executeFormatDocumentProvider',
+	// 			document.uri
+	// 		);
+	// 		return edits;
+	// 	}
+	// });
 
 	client.start();
 }
-
-setInterval(() => {
-	const activeUris = new Set(
-		vscode.window.visibleTextEditors.map(e => e.document.uri.toString())
-	);
-	virtualProvider.purgeInactive(activeUris);
-}, 60_000);
-
-// Cleanup every 5 minutes
-setInterval(() => {
-	const activeUris = new Set(
-		vscode.window.visibleTextEditors
-			.flatMap(editor =>
-				getVirtualUrisForDocument(editor.document) 
-			)
-	);
-	virtualProvider.purgeInactive(activeUris);
-}, 300_000);
 
 module.exports = {
 	activate,
 	deactivate: () => { 
 		client ? client.stop() : undefined;
-		this.virtualProvider = null;
-	},
-	virtualProvider
+	}
 };

@@ -9,6 +9,8 @@
 	"dependencies": {
     "eslint": "^8.56.0",
 		"vscode": "^1.1.37",
-		"vscode-languageclient": "^9.0.1"
+		"vscode-languageclient": "^9.0.1",
+    "acorn-walk": "^8.3.4",
+    "acorn-loose": "^8.5.2" 
 	}
 }
