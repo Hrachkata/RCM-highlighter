@@ -31,8 +31,10 @@ function cacheModules(requiresArr, restDir) {
 		if (moduleFunctionsCache[element]) {
 			return;
 		}
-
-		let modulePath = path.resolve('d:\\SSIS+\\install\\files\\JS\\' + element + '.js');
+		// Go back 2 directories
+		let parentDir = path.dirname(restDir);
+		parentDir = path.dirname(parentDir);
+		let modulePath = path.resolve(parentDir + '\\JS\\' + element + '.js');
 
 		if (!fs.existsSync(modulePath)) {
 			console.warn('Module not found:', modulePath);
@@ -69,7 +71,7 @@ function buildCompletionList(symbols) {
 		let moduleFunctions = moduleFunctionsCache[moduleName].map(
 			funcName => { return { label: funcName, kind: 3 } }
 		);
-		all = all.concat( moduleFunctions );
+		all = all.concat(moduleFunctions);
 	});
 
 	return dedupe(all);
