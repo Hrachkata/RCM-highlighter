@@ -6,14 +6,14 @@ const path = require('path');
 
 var moduleFunctionsCache = {};
 
-async function getJsCompletions(document, position) {
+async function getJsCompletions(document, position, isPotentialFunctionCall) {
 	let block = findJsBlockForLine(document, position);
 	if (!block) return;
 
 	try {
 		const symbols = extractSymbols(block.code);
 		cacheModules(symbols.requires, document.fileName);
-		let result = buildCompletionList(symbols);
+		let result = buildCompletionList(symbols, isPotentialFunctionCall);
 		return result
 
 	} catch (error) {
@@ -47,15 +47,11 @@ function cacheModules(requiresArr, restDir) {
 	});
 }
 
-function buildCompletionList(symbols) {
+function buildCompletionList(symbols, isPotentialFunctionCall) {
 	let all = [];
 
 	symbols.params.forEach(s =>
 		all.push({ label: s, kind: 25 })
-	);
-
-	symbols.functions.forEach(f =>
-		all.push({ label: f, kind: 3 })
 	);
 
 	symbols.variables.forEach(v =>
@@ -66,13 +62,19 @@ function buildCompletionList(symbols) {
 		all.push({ label: p, kind: 10 })
 	);
 
-	// Return functions only on a . character
-	symbols.requires.forEach(moduleName => {
-		let moduleFunctions = moduleFunctionsCache[moduleName].map(
-			funcName => { return { label: funcName, kind: 3 } }
+	if (isPotentialFunctionCall) {
+		symbols.functions.forEach(f =>
+			all.push({ label: f, kind: 3 })
 		);
-		all = all.concat(moduleFunctions);
-	});
+
+		// Return functions only on a . character
+		symbols.requires.forEach(moduleName => {
+			let moduleFunctions = moduleFunctionsCache[moduleName].map(
+				funcName => { return { label: funcName, kind: 3 } }
+			);
+			all = all.concat(moduleFunctions);
+		});
+	}
 
 	return dedupe(all);
 }

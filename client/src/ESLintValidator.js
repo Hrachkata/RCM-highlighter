@@ -1,9 +1,9 @@
 const vscode = require('vscode');
 const { ESLint } = require('eslint');
 
-const dontValidate = ['require', 'getClrType', '_', 's', 'connection', 'user', 'token', 'UI', 'Uri', 'Base64', 'OAuth2', 'alert', 'doT', 'RestConnection', 
-					'utils', 'OAuth1', 'b64_hmac_sha1', 'json2xml', 'aws4s', 'SOAP', 'b64_hmac_sha256', 'dateFormat', 'hex_hmac_sha256', 'hex_hmac_sha1',
-					'Google', 'xml2json']
+const dontValidate = ['require', 'getClrType', '_', 's', 'connection', 'user', 'token', 'UI', 'Uri', 'Base64', 'OAuth2', 'alert', 'doT', 'RestConnection',
+	'utils', 'OAuth1', 'b64_hmac_sha1', 'json2xml', 'aws4s', 'SOAP', 'b64_hmac_sha256', 'dateFormat', 'hex_hmac_sha256', 'hex_hmac_sha1',
+	'Google', 'xml2json']
 const diagnosticSource = 'ESLint-integrated-srv'
 
 eslintInstance = new ESLint(getESLintConfig());
@@ -30,7 +30,7 @@ async function updateDiagnostics(document, collection) {
 }
 
 function createDiagnostic(message, startLine) {
-	var diagnosticObj =  new vscode.Diagnostic(
+	var diagnosticObj = new vscode.Diagnostic(
 		new vscode.Range(
 			startLine + message.line - 1,
 			message.column - 1,
@@ -48,22 +48,22 @@ function createDiagnostic(message, startLine) {
 
 
 // maybe add the attribute js?
-const jsCodePatterndirty =  /<!\[CDATA\[(\s)*?([\s\S]*)\]\]>/gd;
+const jsCodePatterndirty = /<!\[CDATA\[(\s)*?([\s\S]*)\]\]>/gd;
 const elementsInsideDirtyCodePattern = /]]>[\s\S]*?<!\[CDATA\[.*\n?/gd;
-const newlineRegex =  /\n/g
-const newline =  '\n';
+const newlineRegex = /\n/g
+const newline = '\n';
 
 function findJsBlocks(content) {
 	let JSdirty = jsCodePatterndirty.exec(content);
 	if (!JSdirty) {
-		return;	
-	} 
+		return;
+	}
 
 	let allJsCodeDirty = JSdirty[2];
 
 	var match = elementsInsideDirtyCodePattern.exec(allJsCodeDirty);
 
-	while( match ){
+	while (match) {
 		let replacementNewlineCount = match[0].match(newlineRegex)?.length || 0;
 		let replacement = newline.repeat(replacementNewlineCount);
 		allJsCodeDirty = allJsCodeDirty.replace(match[0], replacement);
@@ -80,13 +80,13 @@ function findJsBlocks(content) {
 	return resultObj;
 }
 
-function refreshEslintConfig(){
+function refreshEslintConfig() {
 	eslintInstance = new ESLint(getESLintConfig());
 }
 
-function generateGlobalsObject(globalVars){
+function generateGlobalsObject(globalVars) {
 	let result = {};
-	
+
 	globalVars.forEach(element => {
 		result[element] = 'readonly';
 	});

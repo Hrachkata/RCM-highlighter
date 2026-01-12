@@ -50,10 +50,10 @@ function activate(context) {
 
 	let clientOptions = {
 		documentSelector: [
-		{
-			scheme: 'file',
-			language: 'rcm'
-		}],
+			{
+				scheme: 'file',
+				language: 'rcm'
+			}],
 		synchronize: {
 			fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc')
 		}
@@ -80,7 +80,7 @@ function activate(context) {
 			// Check if inside quotes (attribute value)
 			const isInsideQuotes = /=\s*["'][^"']*$/.test(textBeforeCursor);
 			if (isInsideQuotes) {
-				vscode.commands.executeCommand('editor.action.triggerSuggest',  { auto: true });
+				vscode.commands.executeCommand('editor.action.triggerSuggest', { auto: true });
 			}
 		}, 300); // Small delay to ensure cursor position is updated
 	});
@@ -113,17 +113,25 @@ function activate(context) {
 	// Completion Provider JS
 	context.subscriptions.push(
 		vscode.languages.registerCompletionItemProvider(
-			'rcm', 
+			'rcm',
 			{
-				async provideCompletionItems(document, position) {
-					let completions = await getJsCompletions(document, position);
-					
+				async provideCompletionItems(document, position, token, context) {
+					// Both properties and functions are accessed through a "." symbol
+					let isPotentialFunctionCall = false;
+					if (context) {
+						if (context.triggerCharacter == '.') {
+							isPotentialFunctionCall = true;
+						}
+					}
+
+					let completions = await getJsCompletions(document, position, isPotentialFunctionCall);
+
 					if (completions) {
 						return completions;
 					}
 				}
 			},
-  			'.'
+			'.'
 		)
 	);
 
@@ -143,7 +151,7 @@ function activate(context) {
 
 module.exports = {
 	activate,
-	deactivate: () => { 
+	deactivate: () => {
 		client ? client.stop() : undefined;
 	}
 };
