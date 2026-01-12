@@ -43,3 +43,8 @@ As well as:
 ## Extension Settings
 
 Change the regex located inside syntaxes/rcm.tmLanguage.json to modify the opening and closing matches for your javascript blocks.
+
+Btw, for the JS completion suggestions to work this file structure is required (from the "install" parent dir on, the important structure is that JS and REST are in the same directory):
+D:/software/install/REST/iAmWorkingOnThisCurrently.rcm
+D:/software/install/JS/module1.js
+D:/software/install/JS/module2.js
