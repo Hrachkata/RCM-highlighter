@@ -55,7 +55,7 @@ function activate(context) {
 				language: 'rcm'
 			}],
 		synchronize: {
-			fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc')
+			configurationSection: 'xmljs-rcm-highlight'
 		}
 	};
 

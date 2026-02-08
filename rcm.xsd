@@ -207,7 +207,8 @@
 
 	<xs:complexType name="UserParameters">
 		<xs:sequence>
-			<xs:element name="Parameter" type="config:UserParameter" maxOccurs="unbounded" />
+            <xs:element name="Parameter" type="config:UserParameter" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="External" type="config:ExternalUserParameter" minOccurs="0" maxOccurs="unbounded" />
 		</xs:sequence>
 	</xs:complexType>
 
@@ -256,16 +257,21 @@
 	</xs:simpleType>
 
 	<xs:complexType name="External">
-		<xs:complexContent>
-			<xs:extension base="config:RestRequest">
-				<xs:attribute name="List" type="xs:string" use="optional">
-					<xs:annotation>
-						<xs:documentation>Specifies list extraction expression. Available template variables: response.</xs:documentation>
-					</xs:annotation>
-				</xs:attribute>
-			</xs:extension>
-		</xs:complexContent>
-	</xs:complexType>
+        <xs:complexContent>
+            <xs:extension base="config:RestRequest">
+                <xs:attribute name="List" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>Specifies list extraction expression. Available template variables: response.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="CreateOrAlter" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>Resource creation expression. Available template variables: configuration, create, alter, parameters.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
 
 	<xs:complexType name="ExternalResource">
 		<xs:complexContent>
@@ -281,10 +287,21 @@
 		<xs:complexContent>
 			<xs:extension base="config:External">
 				<xs:sequence>
-					<xs:element name="Field" type="config:Field" minOccurs="0" />
+                    <xs:element name="Field" type="config:Field" minOccurs="0" />
 				</xs:sequence>
 			</xs:extension>
 		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="ExternalUserParameter">
+        <xs:complexContent>
+            <xs:extension base="config:External">
+                <xs:sequence>
+                    <xs:element name="Field" type="config:Field" minOccurs="0" />
+                    <xs:element name="UserParameter" type="config:UserParameter" minOccurs="0" />
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
 	</xs:complexType>
 
 	<xs:element name="Resources">

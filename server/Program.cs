@@ -39,7 +39,7 @@ namespace RcmServer
                             .SetMinimumLevel(LogLevel.Debug)
                 )
                         .WithHandler<CompletionHandler>()
-                        .WithHandler<FormattingHandler>()
+                        //.WithHandler<FormattingHandler>()
                         //.WithHandler<DidChangeWatchedFilesHandler>()
                         //.WithHandler<FoldingRangeHandler>()
                         //.WithHandler<MyWorkspaceSymbolsHandler>()
@@ -60,7 +60,7 @@ namespace RcmServer
                        .OnInitialize(
                             async (server, request, token) =>
                             {
-                                //await Task.Delay(2000).ConfigureAwait(false);
+                                await Task.Delay(2000).ConfigureAwait(false);
                             }
                         )
                        .OnStarted(

@@ -23,7 +23,6 @@ namespace RcmServer
                 if (_docText != newText)
                 {
                     _docText = newText;
-                    // split
                     _lines = SplitLines(_docText);
                 }
             }
