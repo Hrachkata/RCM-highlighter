@@ -18,34 +18,46 @@ namespace RcmServer
             _cache = cache;
         }
 
+        // TODO Do you want some shitty microoptimisation with caching the AST, updating the cache only on actual change between the script elements? Same for the XML?
+        // TODO Do you want some shitty microoptimisation with async handling of the ast and creation of the completion array?
+        // The answer is yes on a second thought, why not :^)
         public Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken)
         {
             // JS Script territory
             if (request.Position.Line > _cache.ScriptLine)
             {
                 var jsModuleDic = _cache.moduleJSCache;
-
+                
                 if (jsModuleDic.Count == 0)
                 {
                     return null;
                 }
-
+                
                 var parserConfig = new ParserOptions
                 {
-                    EcmaVersion = EcmaVersion.ES5,
-                    Tolerant = true,
+                    EcmaVersion = EcmaVersion.ES6,
+                    Tolerant = true
                 };
+
                 // Acornima parser
                 var parser = new Parser( parserConfig );
+                var result = new HashSet<CompletionItem>();
 
                 foreach ((string js, int startLine) tuple in jsModuleDic.Values)
                 {
-                    var ast = parser.ParseScript(tuple.js);
-                    var info = JsAstAutocompleteExtractor.Extract(ast);
+                    try
+                    {
+                        var ast = parser.ParseScript(tuple.js);
+                        var autocompleteInfo = JsAstAutocompleteExtractor.Extract(ast);
+                        handleJsCompletionLists(autocompleteInfo, result);
+                    }
+                    catch (System.Exception)
+                    {
+                        break;
+                    }
                 }
 
-
-                return Task.FromResult(new CompletionList(true));
+                return Task.FromResult( new CompletionList(result) );
             }
 
             var items = new List<CompletionItem>(VibeHelper.Completions);
@@ -110,6 +122,59 @@ namespace RcmServer
 
             return Task.FromResult(new CompletionList(items));
         }
+
+
+        private void handleJsCompletionLists(JsAutocompleteInfo info, HashSet<CompletionItem> result)
+        {
+            // TODO Much code repetition - improve
+            foreach (var func in info.FunctionNames)
+            {
+                var funcCompletionItem = new CompletionItem()
+                {
+                    Label = func,
+                    Kind = CompletionItemKind.Function,
+                    InsertText = func
+                };
+
+                result.Add(funcCompletionItem);
+            }
+
+            foreach (var variable in info.VariableNames)
+            {
+                var varCompletionItem = new CompletionItem()
+                {
+                    Label = variable,
+                    Kind = CompletionItemKind.Variable,
+                    InsertText = variable
+                };
+
+                result.Add(varCompletionItem);
+            }
+
+            foreach (var param in info.ParameterNames)
+            {
+                var paramCompletionItem = new CompletionItem()
+                {
+                    Label = param,
+                    Kind = CompletionItemKind.TypeParameter,
+                    InsertText = param
+                };
+
+                result.Add(paramCompletionItem);
+            }
+
+            foreach (var prop in info.PropertyNames)
+            {
+                var propCompletionItem = new CompletionItem()
+                {
+                    Label = prop,
+                    Kind = CompletionItemKind.Property,
+                    InsertText = prop
+                };
+
+                result.Add(propCompletionItem);
+            }
+        }
     }
 
     public sealed class JsAutocompleteInfo
@@ -118,7 +183,10 @@ namespace RcmServer
         public HashSet<string> VariableNames { get; } = new();
         public HashSet<string> ParameterNames { get; } = new();
         public HashSet<string> PropertyNames { get; } = new();
+        public HashSet<string> RequireModules { get; } = new();
     }
+
+    // TODO Chat GPT written from now on, kinda different than JS acorn, you can improve the handling a lot, but it works for now
     public static class JsAstAutocompleteExtractor
     {
         public static JsAutocompleteInfo Extract(Node root)
@@ -142,6 +210,20 @@ namespace RcmServer
                     foreach (var param in fn.Params)
                         ExtractPatternIdentifiers(param, result.ParameterNames);
 
+                    break;
+
+                // --------------------------------------------------------------------
+                // Require modules handling require('underscore') for example
+                // --------------------------------------------------------------------
+                case CallExpression exp:
+                    if (exp.Callee is Identifier requireId &&
+                        requireId.Name == "require" &&
+                        exp.Arguments.Count == 1 &&
+                        exp.Arguments[0] is Literal literal &&
+                        literal.Value is string s)
+                    {
+                        result.RequireModules.Add(s);
+                    }
                     break;
 
                 // --------------------------------------------------------------------
@@ -237,7 +319,7 @@ namespace RcmServer
             }
         }
 
-        // Resolve MemberExpression chain: e.g. SendGrid.getDataType
+        // Resolve MemberExpression chain: e.g. Test.getDataType
         private static string ResolveMemberName(MemberExpression member)
         {
             var parts = new List<string>();

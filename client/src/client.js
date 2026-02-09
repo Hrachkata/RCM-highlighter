@@ -111,29 +111,29 @@ function activate(context) {
 	}));
 
 	// Completion Provider JS
-	context.subscriptions.push(
-		vscode.languages.registerCompletionItemProvider(
-			'rcm',
-			{
-				async provideCompletionItems(document, position, token, context) {
-					// Both properties and functions are accessed through a "." symbol
-					let isPotentialFunctionCall = false;
-					if (context) {
-						if (context.triggerCharacter == '.') {
-							isPotentialFunctionCall = true;
-						}
-					}
+	// context.subscriptions.push(
+	// 	vscode.languages.registerCompletionItemProvider(
+	// 		'rcm',
+	// 		{
+	// 			async provideCompletionItems(document, position, token, context) {
+	// 				// Both properties and functions are accessed through a "." symbol
+	// 				let isPotentialFunctionCall = false;
+	// 				if (context) {
+	// 					if (context.triggerCharacter == '.') {
+	// 						isPotentialFunctionCall = true;
+	// 					}
+	// 				}
 
-					let completions = await getJsCompletions(document, position, isPotentialFunctionCall);
+	// 				let completions = await getJsCompletions(document, position, isPotentialFunctionCall);
 
-					if (completions) {
-						return completions;
-					}
-				}
-			},
-			'.'
-		)
-	);
+	// 				if (completions) {
+	// 					return completions;
+	// 				}
+	// 			}
+	// 		},
+	// 		'.'
+	// 	)
+	// );
 
 	// TODO: XML Formatter, low priority
 	// vscode.languages.registerDocumentFormattingEditProvider('rcm', {

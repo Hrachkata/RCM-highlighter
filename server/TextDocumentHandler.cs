@@ -1,26 +1,14 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
+﻿
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Schema;
 using MediatR;
-using Microsoft.Extensions.Logging;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Progress;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
-using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
-using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
-
-#pragma warning disable CS0618
 
 namespace RcmServer
 {
@@ -61,7 +49,6 @@ namespace RcmServer
             }
 
             var diagnosticArr = await utils.ValidateBySchemaAsync(changedEvent.Text, notification.TextDocument.Uri);
-
             _languageServer.TextDocument.PublishDiagnostics(diagnosticArr);
 
             utils.ClearDiagnostics();
