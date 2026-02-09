@@ -12,6 +12,8 @@ namespace RcmServer
         private volatile HashSet<string> _templateFieldCache = new();
         private volatile HashSet<string> _templateResourceCache = new();
 
+        public Dictionary<string, (string js, int startLine)> moduleJSCache = new();
+
         private string _docText = string.Empty;
         private string[] _lines = Array.Empty<string>();
         private readonly object _syncRoot = new();

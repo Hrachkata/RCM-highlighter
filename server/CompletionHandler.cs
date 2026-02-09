@@ -1,9 +1,8 @@
-﻿using MediatR;
+﻿using Acornima;
+using Acornima.Ast;
 using OmniSharp.Extensions.JsonRpc;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,9 +20,31 @@ namespace RcmServer
 
         public Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken)
         {
+            // JS Script territory
             if (request.Position.Line > _cache.ScriptLine)
             {
-                // Script territory no need to provide autocompletes, its JS
+                var jsModuleDic = _cache.moduleJSCache;
+
+                if (jsModuleDic.Count == 0)
+                {
+                    return null;
+                }
+
+                var parserConfig = new ParserOptions
+                {
+                    EcmaVersion = EcmaVersion.ES5,
+                    Tolerant = true,
+                };
+                // Acornima parser
+                var parser = new Parser( parserConfig );
+
+                foreach ((string js, int startLine) tuple in jsModuleDic.Values)
+                {
+                    var ast = parser.ParseScript(tuple.js);
+                    var info = JsAstAutocompleteExtractor.Extract(ast);
+                }
+
+
                 return Task.FromResult(new CompletionList(true));
             }
 
@@ -88,6 +109,155 @@ namespace RcmServer
             }
 
             return Task.FromResult(new CompletionList(items));
+        }
+    }
+
+    public sealed class JsAutocompleteInfo
+    {
+        public HashSet<string> FunctionNames { get; } = new();
+        public HashSet<string> VariableNames { get; } = new();
+        public HashSet<string> ParameterNames { get; } = new();
+        public HashSet<string> PropertyNames { get; } = new();
+    }
+    public static class JsAstAutocompleteExtractor
+    {
+        public static JsAutocompleteInfo Extract(Node root)
+        {
+            var result = new JsAutocompleteInfo();
+            Walk(root, result);
+            return result;
+        }
+
+        private static void Walk(Node node, JsAutocompleteInfo result)
+        {
+            switch (node)
+            {
+                // --------------------------------------------------------------------
+                // Function declarations (function foo() {})
+                // --------------------------------------------------------------------
+                case FunctionDeclaration fn:
+                    if (fn.Id != null)
+                        result.FunctionNames.Add(fn.Id.Name);
+
+                    foreach (var param in fn.Params)
+                        ExtractPatternIdentifiers(param, result.ParameterNames);
+
+                    break;
+
+                // --------------------------------------------------------------------
+                // Variable declarations (var x = ..., let y = ..., const z = ...)
+                // --------------------------------------------------------------------
+                case VariableDeclaration varDecl:
+                    foreach (var decl in varDecl.Declarations)
+                        ExtractPatternIdentifiers(decl.Id, result.VariableNames);
+                    break;
+
+                // --------------------------------------------------------------------
+                // Functions assigned via expressions: obj.prop = function() { ... }
+                // --------------------------------------------------------------------
+                case AssignmentExpression assign:
+                    // LHS: must be MemberExpression
+                    if (assign.Left is MemberExpression member)
+                    {
+                        var fullName = ResolveMemberName(member);
+
+                        // obj.prop = function(...) { }
+                        if (assign.Right is FunctionExpression fnExpr)
+                        {
+                            result.FunctionNames.Add(fullName);
+
+                            foreach (var p in fnExpr.Params)
+                                ExtractPatternIdentifiers(p, result.ParameterNames);
+                        }
+                        else if (assign.Right is ArrowFunctionExpression arrowFn)
+                        {
+                            result.FunctionNames.Add(fullName);
+
+                            foreach (var p in arrowFn.Params)
+                                ExtractPatternIdentifiers(p, result.ParameterNames);
+                        }
+
+                        // obj.prop = { key: value, key2: value2 }
+                        if (assign.Right is ObjectExpression objExpr)
+                        {
+                            foreach (var prop in objExpr.Properties)
+                            {
+                                if (prop is Property p && p.Key is Identifier id)
+                                {
+                                    result.PropertyNames.Add($"{fullName}.{id.Name}");
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                // --------------------------------------------------------------------
+                // Function expressions and arrow functions in general
+                // --------------------------------------------------------------------
+                case FunctionExpression fnExp:
+                    foreach (var p in fnExp.Params)
+                        ExtractPatternIdentifiers(p, result.ParameterNames);
+                    break;
+
+                case ArrowFunctionExpression arrow:
+                    foreach (var p in arrow.Params)
+                        ExtractPatternIdentifiers(p, result.ParameterNames);
+                    break;
+            }
+
+            // Recursively walk children
+            foreach (var child in node.ChildNodes)
+                Walk(child, result);
+        }
+
+        // Extract identifiers out of patterns
+        private static void ExtractPatternIdentifiers(Node pattern, HashSet<string> output)
+        {
+            switch (pattern)
+            {
+                case Identifier id:
+                    output.Add(id.Name);
+                    break;
+
+                case ArrayPattern arr:
+                    foreach (var elem in arr.Elements)
+                        if (elem != null)
+                            ExtractPatternIdentifiers(elem, output);
+                    break;
+
+                case ObjectPattern obj:
+                    foreach (var prop in obj.Properties)
+                        foreach (var descendant in prop.ChildNodes)
+                            ExtractPatternIdentifiers(descendant, output);
+                    break;
+
+                case AssignmentPattern assign:
+                    ExtractPatternIdentifiers(assign.Left, output);
+                    break;
+            }
+        }
+
+        // Resolve MemberExpression chain: e.g. SendGrid.getDataType
+        private static string ResolveMemberName(MemberExpression member)
+        {
+            var parts = new List<string>();
+
+            while (member != null)
+            {
+                if (member.Property is Identifier id)
+                    parts.Add(id.Name);
+
+                if (member.Object is Identifier parentId)
+                {
+                    parts.Add(parentId.Name);
+                    break;
+                }
+
+                member = member.Object as MemberExpression;
+            }
+
+            parts.Reverse();
+            return string.Join(".", parts);
         }
     }
 }

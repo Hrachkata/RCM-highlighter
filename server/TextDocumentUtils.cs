@@ -49,22 +49,6 @@ namespace RcmServer
             set => _validationSettings = value;
         }
 
-        private XmlReaderSettings defaultSettings
-        {
-            get
-            {
-                if (_defaultSettings == null)
-                {
-                    _defaultSettings = new XmlReaderSettings();
-                    _defaultSettings.IgnoreComments = true;
-                    _defaultSettings.Async = true;
-                }
-
-                return _defaultSettings;
-            }
-            set => _defaultSettings = value;
-        }
-
         public static bool ValidateXml(string xmlString, XmlSchema schema)
         {
             try
@@ -94,6 +78,7 @@ namespace RcmServer
             }
         }
 
+
         public async Task<PublishDiagnosticsParams> ValidateBySchemaAsync(string documentContent, DocumentUri documentUri)
         {
             cache.UpdateDocument(documentContent);
@@ -101,10 +86,15 @@ namespace RcmServer
             var resourceNames = new HashSet<string>();
             var fieldNames = new HashSet<string>();
 
+            // MaxValue, because the completion handler does a greater than <Script> line
             cache.ScriptLine = int.MaxValue;
 
             cache.ClearTemplateFieldCache();
             cache.ClearTemplateResourceCache();
+
+            // We want to save the module element start and name for the caching of JS
+            var moduleName = string.Empty;
+            var moduleStartLine = int.MaxValue;
 
             try
             {
@@ -119,7 +109,21 @@ namespace RcmServer
                         // Get the script position, we do not want autocompletes inside the JS
                         if (XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.Name == "Script")
                         {
-                            cache.ScriptLine = (XMLdocReader is IXmlLineInfo xmlLine && xmlLine.HasLineInfo()) ? xmlLine.LineNumber : -1;
+                            cache.ScriptLine = (XMLdocReader is IXmlLineInfo xmlLine && xmlLine.HasLineInfo()) ? xmlLine.LineNumber : int.MaxValue;
+                        }
+
+                        if (XMLdocReader.NodeType == XmlNodeType.Element && XMLdocReader.Name == "Module")
+                        {
+                            // Inside a <Module> - save the name and startline for use in caching
+                            // Also a parent of CDATA
+                            moduleName = XMLdocReader.GetAttribute("Name");
+                            moduleStartLine = (XMLdocReader is IXmlLineInfo xmlLine && xmlLine.HasLineInfo()) ? xmlLine.LineNumber : int.MaxValue;
+                        }
+
+                        if (XMLdocReader.NodeType == XmlNodeType.CDATA)
+                        {
+                            // We are inside a JS block, the value here is raw JS
+                            cache.moduleJSCache[moduleName] = (XMLdocReader.Value, moduleStartLine);
                         }
 
                         if (XMLdocReader.NodeType == XmlNodeType.Element && !doneWithTemplates )
@@ -208,7 +212,7 @@ namespace RcmServer
 
         public void ValidationCallBack(object? sender, ValidationEventArgs args)
         {
-            var changedText = sender?.GetType().GetProperty("Name")?.GetValue(sender, null).ToString();
+            var changedText = sender?.GetType().GetProperty("Name")?.GetValue(sender, null)?.ToString();
 
             if (changedText == null)
             {
