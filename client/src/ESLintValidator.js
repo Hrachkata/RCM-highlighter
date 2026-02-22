@@ -1,10 +1,33 @@
 const vscode = require('vscode');
 const { ESLint } = require('eslint');
 
-const dontValidate = ['require', 'getClrType', '_', 's', 'connection', 'user', 'token', 'UI', 'Uri', 'Base64', 'OAuth2', 'alert', 'doT', 'RestConnection',
-	'utils', 'OAuth1', 'b64_hmac_sha1', 'json2xml', 'aws4s', 'SOAP', 'b64_hmac_sha256', 'dateFormat', 'hex_hmac_sha256', 'hex_hmac_sha1',
-	'Google', 'xml2json']
-const diagnosticSource = 'ESLint-integrated-srv'
+const { extractGlobalIdentifiers } = require('./moduleGlobalsExtractor');
+
+const dontValidate = ['require', 'getClrType', 'DataType', 'connection', 'user', 'token', 'alert', 'RestConnection', 'UI'];
+const diagnosticSource = 'ESLint-integrated-srv';
+
+var lintConfig = {
+	useEslintrc: false,
+	overrideConfig: {
+		extends: ['eslint:recommended'],
+		parserOptions: {
+			ecmaVersion: 'latest',
+			sourceType: 'script' // Changed from 'module' for CommonJS-like env
+		},
+		env: {
+			browser: false,
+			es2021: true,
+			node: true // Enable Node.js globals if needed
+		},
+		globals: generateGlobalsObject(dontValidate),
+		rules: {
+			"no-fallthrough": ["warn"],
+			"no-constant-condition": ["warn", { "checkLoops": false }],
+			"no-unused-vars": ["warn"],
+			"no-useless-escape": "off" // Consider disabling if using XML entities
+		}
+	}
+};
 
 eslintInstance = new ESLint(getESLintConfig());
 
@@ -13,6 +36,14 @@ async function updateDiagnostics(document, collection) {
 
 	if (!block) {
 		return;
+	}
+
+	// These are not to be validated.
+	var moduleGlobalImports = extractGlobalIdentifiers(block.cleanedJs, document.fileName);
+	if (moduleGlobalImports && moduleGlobalImports.size > 0) {
+		moduleGlobalImports = dontValidate.concat(Array.from(moduleGlobalImports));
+		lintConfig.overrideConfig.globals = generateGlobalsObject(moduleGlobalImports);
+		refreshEslintConfig();
 	}
 
 	const allDiagnostics = [];
@@ -95,29 +126,7 @@ function generateGlobalsObject(globalVars) {
 }
 
 function getESLintConfig() {
-	return {
-		useEslintrc: false,
-		overrideConfig: {
-			extends: ['eslint:recommended'],
-			parserOptions: {
-				ecmaVersion: 'latest',
-				sourceType: 'script' // Changed from 'module' for CommonJS-like env
-			},
-			env: {
-				browser: false,
-				es2021: true,
-				node: true // Enable Node.js globals if needed
-			},
-			globals: generateGlobalsObject(dontValidate),
-			rules: {
-				"no-fallthrough": ["warn"],
-				"no-constant-condition": ["warn", { "checkLoops": false }],
-				"no-unused-vars": ["warn"],
-				"no-useless-escape": "off" // Consider disabling if using XML entities
-			}
-		},
-		//resolvePluginsRelativeTo: 'D:\\SSIS+\\install\\files\\JS'
-	};
+	return lintConfig;
 }
 
-module.exports = { updateDiagnostics, dontValidate, refreshEslintConfig };
+module.exports = { updateDiagnostics };

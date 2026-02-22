@@ -6,19 +6,8 @@ const {
 } = require('vscode-languageclient/node');
 
 const {
-	updateDiagnostics,
-	dontValidate,
-	refreshEslintConfig
+	updateDiagnostics
 } = require('./ESLintValidator');
-
-const {
-	getJsCompletions
-} = require('./CompletionService');
-
-const {
-	JsVirtualDocumentProvider
-} = require('./JsVirtualDocumentProvider');
-
 
 const languageServerPathDebug = "server/bin/Debug/net5.0/RcmServer.dll";
 const languageServerPathRelease = "server/bin/Release/net5.0/RcmServer.dll";
@@ -110,30 +99,6 @@ function activate(context) {
 		setTimeout(() => updateDiagnostics(doc, diagnostics), 500);
 	}));
 
-	// Completion Provider JS
-	// context.subscriptions.push(
-	// 	vscode.languages.registerCompletionItemProvider(
-	// 		'rcm',
-	// 		{
-	// 			async provideCompletionItems(document, position, token, context) {
-	// 				// Both properties and functions are accessed through a "." symbol
-	// 				let isPotentialFunctionCall = false;
-	// 				if (context) {
-	// 					if (context.triggerCharacter == '.') {
-	// 						isPotentialFunctionCall = true;
-	// 					}
-	// 				}
-
-	// 				let completions = await getJsCompletions(document, position, isPotentialFunctionCall);
-
-	// 				if (completions) {
-	// 					return completions;
-	// 				}
-	// 			}
-	// 		},
-	// 		'.'
-	// 	)
-	// );
 
 	// TODO: XML Formatter, low priority
 	// vscode.languages.registerDocumentFormattingEditProvider('rcm', {
